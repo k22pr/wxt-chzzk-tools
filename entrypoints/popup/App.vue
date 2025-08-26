@@ -25,12 +25,13 @@ import OptionContent from "@/components/OptionContent.vue";
             src="@/assets/logo.svg"
             class="logo vue"
             alt="Vue logo"
-            w="64px"
+            w="54px"
+            my="4"
           />
         </div>
         <h1 text="center">Chzzk Tools</h1>
       </div>
-      <div w="full" px="6">
+      <div w="full" px="4">
         <OptionContent />
       </div>
     </div>
@@ -41,10 +42,8 @@ import OptionContent from "@/components/OptionContent.vue";
 <style scoped lang="scss">
 .logo {
   height: 6em;
-  padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
-  transform: rotate(45deg);
 }
 .logo:hover {
   filter: drop-shadow(0 0 2em #54bc4ae0);

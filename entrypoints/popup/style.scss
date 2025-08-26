@@ -16,6 +16,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  max-height: 500px;
+  height: 340px;
 }
 
 body {
@@ -23,7 +25,7 @@ body {
   display: flex;
   place-items: center;
   width: 360px;
-  height: 280px;
+  height: 100vh;
 }
 
 h1 {
