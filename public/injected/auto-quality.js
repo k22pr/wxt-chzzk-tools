@@ -10,7 +10,6 @@
 // @license MIT
 // ==/UserScript==
 
-console.log("auto-quality.js");
 (function () {
   const VIDEO_ELEMENT_NAME = "video.webplayer-internal-video";
   const QUALITY_ELEMENT_NAME = "li.pzp-ui-setting-quality-item";

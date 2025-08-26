@@ -10,7 +10,6 @@
 // @license MIT
 // ==/UserScript==
 
-console.log("live-bar.js");
 (function () {
   const VIDEO_ELEMENT_NAME = "video.webplayer-internal-video";
   const BOTTOM_SEL = "div.pzp-pc__bottom";
