@@ -16,6 +16,10 @@ const options = reactive({
 onMounted(async () => {
   const saved = await storage.getItem(`local:${STORAGE_KEY}`);
   Object.assign(options, { ...DEFAULT_OPTIONS, ...(saved ?? {}) });
+
+  if (!saved) {
+    storage.setItem(`local:${STORAGE_KEY}`, options);
+  }
 });
 
 watch(

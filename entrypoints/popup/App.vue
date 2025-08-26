@@ -20,7 +20,7 @@ import OptionContent from "@/components/OptionContent.vue";
     > -->
     <div w="full" p="4">
       <div w="full" flex="col" items="center" mb="6">
-        <div w="full" text="center">
+        <div w="full" text="center" flex justify="center">
           <img
             src="@/assets/logo.svg"
             class="logo vue"

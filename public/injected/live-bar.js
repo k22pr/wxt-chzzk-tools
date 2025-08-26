@@ -10,6 +10,7 @@
 // @license MIT
 // ==/UserScript==
 
+console.log("live-bar.js");
 (function () {
   const VIDEO_ELEMENT_NAME = "video.webplayer-internal-video";
   const BOTTOM_SEL = "div.pzp-pc__bottom";
@@ -60,7 +61,6 @@
   })();
 
   const timeFormat = (t) => {
-    // t = Math.max(0, t | 0);
     const h = (t / 3600) | 0,
       m = ((t % 3600) / 60) | 0,
       s = t % 60 | 0;
@@ -101,10 +101,8 @@
   };
 
   function findBottomContainer(v) {
-    // 같은 문서에서 우선 탐색
     let c = document.querySelector(BOTTOM_SEL);
     if (c) return c;
-    // Shadow DOM 호스트들 위로 탐색
     let node = v;
     while (node) {
       const root = node.getRootNode?.();
@@ -120,11 +118,11 @@
   function mount(v) {
     if (v.__liveBarMounted) return;
     const bottom = findBottomContainer(v);
-    if (!bottom) return; // 컨테이너가 아직 없음
+    if (!bottom) return;
 
     styleOnce();
 
-    if (bottom.querySelector(".live-bar-box")) return; // 중복 방지
+    if (bottom.querySelector(".live-bar-box")) return;
 
     document.querySelector(`${BOTTOM_SEL} .slider`)?.remove();
 
@@ -138,21 +136,16 @@
       </div>
         <div class='time'>
           <span class="t total">0:00</span>
-          <!-- <span class="t curr">0:00</span><span>/</span> -->
-          <!-- <span class="t total">0:00</span> -->
           <button class="go">LIVE</button>
-          <!-- <button class="slide-test">0</button> -->
         </div>
       </div>
     `;
     bottom.appendChild(wrap);
 
     const rng = wrap.querySelector(".rng");
-    const tCurr = wrap.querySelector(".curr");
     const tTotal = wrap.querySelector(".total");
     const btn = wrap.querySelector(".go");
     const slide = wrap.querySelector(".slide-box");
-    // const testBox = wrap.querySelector(".slide-test");
 
     const tip = document.createElement("div");
     tip.className = "hover-tip";
@@ -164,7 +157,6 @@
     let raf = 0,
       lastEvt = null;
 
-    let dragging = false;
     const useRVFC = "requestVideoFrameCallback" in v;
     let rafId = 0;
 
@@ -187,7 +179,7 @@
       const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
       const ratio = rect.width ? x / rect.width : 0;
 
-      const { start, end, ok } = getEdges(v);
+      const { start, end } = getEdges(v);
       const target = start + ratio * (end - start);
       seekTo(target);
 
@@ -196,11 +188,9 @@
 
     const atLiveEdge = (currentTime) => {
       const { end } = getEdges(v);
-      // return isFinite(end) && end - v.currentTime < 2;
       return currentTime - end > -LIVE_EPS;
     };
 
-    // 시간 포맷은 기존 timeFormat 사용
     function renderAt(clientX) {
       const rect = slide.getBoundingClientRect();
       const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
@@ -215,14 +205,13 @@
       const t = lo + ratio * (hi - lo);
       const nearLive = atLiveEdge(t);
 
-      tip.textContent = nearLive ? "LIVE" : timeFormat(t - hi); // DVR 경과시간 표기
-      // 위치
+      tip.textContent = nearLive ? "LIVE" : timeFormat(t - hi);
       cross.style.left = `${x}px`;
       tip.style.left = `${x}px`;
     }
 
     function updateUI() {
-      const { start, end, ok } = getEdges(v);
+      const { start, end } = getEdges(v);
 
       const percent = (v.currentTime - start) / (end - start);
       if (end - v.currentTime < LIVE_EPS) {
@@ -231,44 +220,28 @@
         rng.style.width = `${Math.min(100, percent * 100)}%`;
       }
 
-      // testBox.textContent = (v.currentTime - start).toFixed(4);
-      const currentTime = Math.max(0, v.currentTime - start);
       const totalTime = Math.max(0, end - start);
-
       tTotal.textContent = timeFormat(Math.min(totalTime, MAX_VIDEO_DURATION));
 
       const live = atLiveEdge(v.currentTime);
-      // btn.textContent = live ? "LIVE" : "LIVE";
       if (live) {
         btn.textContent = "LIVE";
         btn.classList.add("live", live);
       } else {
-        btn.textContent = timeFormat(currentTime - totalTime);
+        btn.textContent = timeFormat(v.currentTime - end + start - totalTime);
         btn.classList.remove("live");
       }
       if (lastEvt) renderAt(lastEvt.clientX);
     }
 
     function seekTo(val) {
-      const { start, end, ok } = getEdges(v);
+      const { start, end } = getEdges(v);
       const lo = start,
         hi = end;
       v.currentTime = Math.min(hi, Math.max(lo, val));
     }
 
-    // rng.addEventListener("input", () => {
-    //   dragging = true;
-    //   tCurr.textContent = timeFormat(
-    //     Math.max(
-    //       0,
-    //       parseFloat(rng.getAttribute("value")) -
-    //         parseFloat(rng.getAttribute("min"))
-    //     )
-    //   );
-    // });
-
     slide.addEventListener("mousedown", seekFromClick);
-    // slide.addEventListener("click", seekFromClick);
     document.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
         e.preventDefault();
@@ -312,7 +285,7 @@
 
     function loopRVFC() {
       v.requestVideoFrameCallback(() => {
-        if (!dragging) updateUI();
+        updateUI();
         loopRVFC();
       });
     }
@@ -339,7 +312,6 @@
     if (useRVFC) loopRVFC();
     else loopRAF();
 
-    // 비디오 제거 시 정리
     const mo = new MutationObserver(() => {
       if (!document.contains(v) || !document.contains(wrap)) {
         if (rafId) cancelAnimationFrame(rafId);
@@ -361,7 +333,6 @@
     });
   }
 
-  // SPA URL change
   (function () {
     const fireLoc = () => setTimeout(tryMountAll, 0);
     const _ps = history.pushState,
@@ -379,14 +350,12 @@
     window.addEventListener("popstate", fireLoc);
   })();
 
-  // 초기 시도
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", tryMountAll, { once: true });
   } else {
     tryMountAll();
   }
 
-  // 동적 삽입 감시: 비디오나 컨테이너가 나중에 생길 때
   new MutationObserver((list) => {
     for (const m of list) {
       for (const n of m.addedNodes) {

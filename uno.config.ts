@@ -2,6 +2,7 @@ import {
   defineConfig,
   presetAttributify,
   presetIcons,
+  presetWind4,
   presetUno,
 } from "unocss";
 
