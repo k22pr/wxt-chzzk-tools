@@ -1,5 +1,5 @@
 /* //header */
-html body div#root header {
+html body div#root header[class^="header_container__"] {
   position: fixed;
   top: -100px !important;
   left: 42.5%;
@@ -12,15 +12,15 @@ html body div#root header {
   transform: scale(0.85) translateX(-50%);
   box-shadow: 0px 0px 32px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: top 0.5s;
+  transition: 0.5s;
   opacity: 0;
 }
-html body div#root header.tool-active {
+html body div#root header[class^="header_container__"].tool-active {
   opacity: 1;
-  top: 10px;
+  top: 10px !important;
 }
 
-html body div#root header form[role="search"] {
+html body div#root header[class^="header_container__"] form[role="search"] {
   margin-top: -2px;
 }
 
@@ -29,16 +29,20 @@ html body div#root header form[role="search"] {
   padding-left: 0px;
 }
 
-#layout-body > section {
+#layout-body > section[class^="live_container__"] {
   height: 100vh !important;
 }
-#layout-body > section main > div:nth-child(1) {
+#layout-body > section[class^="live_container__"] main > div:nth-child(1) {
   display: block;
-  max-height: auto;
+  max-height: none;
   /* height: 100vh !important; */
 }
 
-#layout-body > section main > div:nth-child(1) > div:nth-child(1) {
+#layout-body
+  > section[class^="live_container__"]
+  main
+  > div:nth-child(1)
+  > div:nth-child(1) {
   height: 100vh !important;
 }
 
@@ -46,23 +50,35 @@ html {
   background-color: rgb(255, 255, 255) !important;
 }
 
-html body div#root > div > aside {
+html body div#root > div > aside[class^="aside_container__"] {
   position: fixed;
   top: 200px !important;
   pointer-events: none;
   /* background:#fff !important; */
 }
-html body div#root > div > aside > div {
+html body div#root > div > aside[class^="aside_container__"] > div {
   height: auto;
   background: transparent !important;
 }
 
-html body div#root > div > aside > div > div > :not(:nth-child(2)) {
+html
+  body
+  div#root
+  > div
+  > aside[class^="aside_container__"]
+  div[class^="aside_content__"]
+  > nav:not(:nth-child(2)) {
   display: none;
 }
 
 /* //side bar */
-html body div#root > div > aside > div > div > :nth-child(2) {
+html
+  body
+  div#root
+  > div
+  > aside[class^="aside_container__"]
+  div[class^="aside_content__"]
+  > nav:nth-child(2) {
   position: fixed;
   top: 50%;
   left: -200px;
@@ -73,13 +89,32 @@ html body div#root > div > aside > div > div > :nth-child(2) {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 30px;
   transform: scale(0.9) translateY(-50%);
+  transition: 0.5s;
+  opacity: 0;
 }
 
-html body div#root > div > aside > div > div > :nth-child(2).active {
+html
+  body
+  div#root
+  > div
+  > aside[class^="aside_container__"]
+  nav[class^="navigation_bar_section__"]:nth-child(2).tool-active {
   pointer-events: auto;
   left: 0px;
+  opacity: 1;
+}
+
+html
+  body
+  div#root
+  > div
+  > aside[class^="aside_container__"]
+  div[class^="aside_content__"]
+  > nav:nth-child(2)::before {
+  content: "";
+  display: none;
 }
 
 #aside-chatting {
-  max-width: 320px;
+  /* max-width: 320px; */
 }

@@ -2,15 +2,15 @@
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
 const DEFAULT_OPTIONS = {
-  useStreamDesign: true,
   useAutoQuality: true,
   useLiveBar: true,
+  useStreamDesign: true,
 };
 
 const options = reactive({
-  useStreamDesign: true,
   useAutoQuality: true,
   useLiveBar: true,
+  useStreamDesign: true,
 });
 
 onMounted(async () => {
@@ -41,20 +41,7 @@ const toggleOption = (
 
 <template>
   <div w="full" grid gap="4">
-    <div w="full" grid gap="1">
-      <div w="full" flex items="top" justify="between">
-        <div w="full">
-          <div text="4">방송화면 디자인</div>
-          <div text="3 gray-5">
-            방송화면에 집중할 수 있도록 UI를 변경합니다.
-          </div>
-        </div>
-        <div>
-          <a-switch v-model:checked="options.useStreamDesign" />
-        </div>
-      </div>
-    </div>
-    <div w="full" grid gap="1">
+    <div w="full" grid gap="2">
       <div w="full" flex items="top" class="flex" justify="between">
         <div w="full">
           <div text="4">자동 화질변경</div>
@@ -67,7 +54,7 @@ const toggleOption = (
         </div>
       </div>
     </div>
-    <div w="full" grid gap="1">
+    <div w="full" grid gap="2">
       <div w="full" flex items="top" justify="between">
         <div w="full">
           <div text="4">LIVE 재생바</div>
@@ -77,6 +64,19 @@ const toggleOption = (
         </div>
         <div>
           <a-switch v-model:checked="options.useLiveBar" />
+        </div>
+      </div>
+    </div>
+    <div w="full" grid gap="2">
+      <div w="full" flex items="top" justify="between">
+        <div w="full">
+          <div text="4">방송화면 디자인</div>
+          <div text="3 gray-5">
+            방송화면에 집중할 수 있도록 UI를 변경합니다.
+          </div>
+        </div>
+        <div>
+          <a-switch v-model:checked="options.useStreamDesign" />
         </div>
       </div>
     </div>

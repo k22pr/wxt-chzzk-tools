@@ -17,6 +17,7 @@ export default defineConfig({
           "injected/auto-quality.js",
           "injected/live-bar.js",
           "injected/stream-design.css",
+          "injected/stream-design.js",
         ],
         matches: ["https://chzzk.naver.com/*"],
       },
@@ -24,7 +25,7 @@ export default defineConfig({
   },
   webExt: {
     startUrls: [
-      "https://chzzk.naver.com/live/32fb866e323242b770cdc790f991a6f6",
+      "https://chzzk.naver.com/live/9199eb6eb3dea874f47bbb35bd1dfee2",
     ],
   },
 });

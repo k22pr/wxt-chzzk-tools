@@ -6,8 +6,26 @@
     <title>Default Popup Title</title>
     <meta name="manifest.type" content="browser_action" />
   </head>
-  <body>
+  <body
+    oncontextmenu="return false"
+    ondragstart="return false"
+    onkeydown="return false"
+  >
     <div id="app"></div>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>
+
+<script>
+  // document.addEventListener("contextmenu", function (event) {
+  //   event.preventDefault();
+  // });
+
+  document.addEventListener("copy", function (event) {
+    event.preventDefault();
+  });
+
+  document.addEventListener("selectstart", function (event) {
+    event.preventDefault();
+  });
+</script>
