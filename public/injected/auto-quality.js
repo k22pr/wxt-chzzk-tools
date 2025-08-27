@@ -128,3 +128,84 @@
     }
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();
+
+(function () {
+  const MSG = "광고 차단 프로그램을 사용 중이신가요?";
+
+  const isPopupContents = (el) =>
+    el instanceof Element &&
+    (el.className + "").includes("popup_contents__") &&
+    el.textContent &&
+    el.textContent.includes(MSG);
+
+  const removePopup = (el) => {
+    const container =
+      el.closest(
+        '[role="dialog"], [role="alertdialog"], [class*="popup"], [class*="modal"], [class*="layer"]'
+      ) || el;
+
+    container.parentElement.style.opacity = "0";
+    document.documentElement.style.overflow = "auto";
+    container.parentElement.remove();
+  };
+
+  const scan = (root) => {
+    if (!root) return;
+    const candidates =
+      root.querySelectorAll?.('[class*="popup_contents__"]') ?? [];
+    candidates.forEach((el) => {
+      if (isPopupContents(el)) removePopup(el);
+    });
+
+    const all = root.querySelectorAll?.("*") ?? [];
+    all.forEach((n) => {
+      if (n.shadowRoot) scan(n.shadowRoot);
+    });
+    if (root.shadowRoot) scan(root.shadowRoot);
+  };
+
+  const ready = () => scan(document);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", ready);
+  } else {
+    ready();
+  }
+
+  const mo = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      m.addedNodes.forEach((node) => {
+        if (node.nodeType === 1) scan(node); // Element
+      });
+      if (m.type === "characterData" && m.target?.parentElement) {
+        const el = m.target.parentElement.closest?.(
+          '[class*="popup_contents__"]'
+        );
+        if (el && isPopupContents(el)) removePopup(el);
+      }
+    }
+  });
+
+  mo.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
+
+  // SPA URL change
+  (function () {
+    const fireLoc = () => setTimeout(() => scan(document), 0);
+    const _ps = history.pushState,
+      _rs = history.replaceState;
+    history.pushState = function () {
+      const r = _ps.apply(this, arguments);
+      fireLoc();
+      return r;
+    };
+    history.replaceState = function () {
+      const r = _rs.apply(this, arguments);
+      fireLoc();
+      return r;
+    };
+    window.addEventListener("popstate", fireLoc);
+  })();
+})();

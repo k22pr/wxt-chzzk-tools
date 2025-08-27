@@ -4,13 +4,13 @@ import { STORAGE_KEY } from "@/constants";
 const DEFAULT_OPTIONS = {
   useAutoQuality: true,
   useLiveBar: true,
-  useStreamDesign: true,
+  useStreamDesign: false,
 };
 
 const options = reactive({
   useAutoQuality: true,
   useLiveBar: true,
-  useStreamDesign: true,
+  useStreamDesign: false,
 });
 
 onMounted(async () => {
@@ -67,7 +67,7 @@ const toggleOption = (
         </div>
       </div>
     </div>
-    <div w="full" grid gap="2">
+    <!-- <div w="full" grid gap="2">
       <div w="full" flex items="top" justify="between">
         <div w="full">
           <div text="4">방송화면 디자인</div>
@@ -79,7 +79,7 @@ const toggleOption = (
           <a-switch v-model:checked="options.useStreamDesign" />
         </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 

@@ -1,6 +1,20 @@
 <script lang="ts" setup>
 import { theme } from "ant-design-vue";
 import OptionContent from "@/components/OptionContent.vue";
+
+onMounted(() => {
+  // document.addEventListener("contextmenu", function (event) {
+  //   event.preventDefault();
+  // });
+
+  document.addEventListener("copy", function (event) {
+    event.preventDefault();
+  });
+
+  document.addEventListener("selectstart", function (event) {
+    event.preventDefault();
+  });
+});
 </script>
 
 <template>

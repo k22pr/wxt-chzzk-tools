@@ -8,7 +8,6 @@ export default defineConfig({
   },
   manifest: {
     permissions: ["storage"],
-    optional_host_permissions: ["https://chzzk.naver.com/*"],
     web_accessible_resources: [
       {
         resources: [
