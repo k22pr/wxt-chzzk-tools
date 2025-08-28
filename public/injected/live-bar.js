@@ -237,7 +237,7 @@
       const { start, end } = getEdges(v);
       const lo = start,
         hi = end;
-      v.currentTime = Math.min(hi, Math.max(lo, val));
+      v.currentTime = Math.min(hi - 1, Math.max(lo, val));
     }
 
     slide.addEventListener("mousedown", seekFromClick);
