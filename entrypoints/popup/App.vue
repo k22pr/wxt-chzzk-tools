@@ -1,6 +1,13 @@
 <script lang="ts" setup>
 import { theme } from "ant-design-vue";
 import OptionContent from "@/components/OptionContent.vue";
+import { storage } from "wxt/utils/storage";
+import { STORAGE_KEY } from "@/constants";
+
+// 대표 색상 상태 (기본값)
+const colorPrimary = ref<string>("#00f889");
+
+const isLoaded = ref(false);
 
 onMounted(() => {
   // document.addEventListener("contextmenu", function (event) {
@@ -14,7 +21,20 @@ onMounted(() => {
   document.addEventListener("selectstart", function (event) {
     event.preventDefault();
   });
+
+  // 저장된 옵션에서 색상 초기화
+  storage.getItem(`local:${STORAGE_KEY}`).then((saved: any) => {
+    if (saved?.colorPrimary && typeof saved.colorPrimary === "string") {
+      colorPrimary.value = saved.colorPrimary;
+    }
+    isLoaded.value = true;
+  });
 });
+
+// 자식에서 색상 변경 시 테마 즉시 반영
+const onUpdateColor = (color: string) => {
+  colorPrimary.value = color;
+};
 </script>
 
 <template>
@@ -22,7 +42,7 @@ onMounted(() => {
     :theme="{
       algorithm: theme.darkAlgorithm,
       token: {
-        colorPrimary: '#00f889',
+        colorPrimary: colorPrimary,
       },
     }"
   >
@@ -45,8 +65,8 @@ onMounted(() => {
         </div>
         <h1 text="center">Chzzk Tools</h1>
       </div>
-      <div w="full" px="4">
-        <OptionContent />
+      <div w="full" px="4" v-if="isLoaded">
+        <OptionContent @update-color="onUpdateColor" />
       </div>
     </div>
     <!-- </a-watermark> -->

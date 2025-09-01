@@ -17,6 +17,8 @@ export default defineConfig({
           "injected/live-bar.js",
           "injected/stream-design.css",
           "injected/stream-design.js",
+          "injected/theme.css",
+          "injected/theme.js",
         ],
         matches: ["https://chzzk.naver.com/*"],
       },

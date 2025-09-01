@@ -11,57 +11,31 @@ let installed = {
 };
 
 function injectPublicScript(file: string, attrs: Record<string, string> = {}) {
-  try {
-    const url = browser.runtime.getURL(`injected/${file}` as any);
-    const s = document.createElement("script");
-    s.src = url;
-    s.async = false;
-    Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
-    (document.head || document.documentElement).appendChild(s);
-    s.remove();
-  } catch (e) {
-    console.error(e);
-  }
+  const url = browser.runtime.getURL(`injected/${file}` as any);
+  const s = document.createElement("script");
+  s.src = url;
+  s.async = false;
+  Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
+  (document.head || document.documentElement).appendChild(s);
+  s.remove();
+
+  console.log("[chzzk-tools] injectPublicScript", url, file);
 }
 
 function injectPublicStyle(file: string) {
-  try {
-    if (cssLink) return; // 중복 방지
-    const url = browser.runtime.getURL(`injected/${file}` as any);
-    cssLink = document.createElement("link");
-    cssLink.id = "chzzk-tools-style";
-    cssLink.rel = "stylesheet";
-    cssLink.href = url;
-    (document.head || document.documentElement).appendChild(cssLink);
-  } catch (e) {
-    console.error(e);
-  }
+  if (cssLink) return; // 중복 방지
+  const url = browser.runtime.getURL(`injected/${file}` as any);
+  cssLink = document.createElement("link");
+  cssLink.id = "chzzk-tools-style";
+  cssLink.rel = "stylesheet";
+  cssLink.href = url;
+  (document.head || document.documentElement).appendChild(cssLink);
 }
 
 function removePublicStyle() {
-  try {
-    cssLink?.remove();
-    cssLink = null;
-  } catch (e) {
-    console.error(e);
-  }
+  cssLink?.remove();
+  cssLink = null;
 }
-
-// export default defineContentScript({
-//   matches: ["https://chzzk.naver.com/live/*"],
-//   async main() {
-//     triggerElement = document.createElement("div");
-//     triggerElement.id = "chzzk-tools-trigger";
-//     triggerElement.style.display = "none";
-//     // triggerElement?.setAttribute("installed-live-bar", "false");
-//     // triggerElement?.setAttribute("installed-auto-quality", "false");
-//     // triggerElement?.setAttribute("installed-stream-design", "false");
-//     document.body.appendChild(triggerElement);
-
-//     injectPublicStyle("stream-design.css");
-//     injectPublicScript("stream-design.js");
-//   },
-// });
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
@@ -82,35 +56,8 @@ export default defineContentScript({
         useStreamDesign: false,
         useAutoQuality: true,
         useLiveBar: true,
+        themeName: "primary",
       };
-    }
-    // public/injected/* 자산을 페이지에 주입하는 유틸
-    function injectPublicScript(
-      file: string,
-      attrs: Record<string, string> = {}
-    ) {
-      const url = browser.runtime.getURL(`injected/${file}` as any);
-      const s = document.createElement("script");
-      s.src = url;
-      s.async = false;
-      Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
-      (document.head || document.documentElement).appendChild(s);
-      s.remove();
-    }
-
-    function injectPublicStyle(file: string) {
-      if (cssLink) return; // 중복 방지
-      const url = browser.runtime.getURL(`injected/${file}` as any);
-      cssLink = document.createElement("link");
-      cssLink.id = "chzzk-tools-style";
-      cssLink.rel = "stylesheet";
-      cssLink.href = url;
-      (document.head || document.documentElement).appendChild(cssLink);
-    }
-
-    function removePublicStyle() {
-      cssLink?.remove();
-      cssLink = null;
     }
 
     function postPageMessage(type: string, payload?: any) {
@@ -126,10 +73,16 @@ export default defineContentScript({
         "auto-quality",
         data?.useAutoQuality ? "true" : "false"
       );
-      triggerElement?.setAttribute(
-        "stream-design",
-        data?.useStreamDesign ? "true" : "false"
-      );
+      // triggerElement?.setAttribute(
+      //   "stream-design",
+      //   data?.useStreamDesign ? "true" : "false"
+      // );
+      triggerElement?.setAttribute("stream-design", "false");
+
+      const color = data?.themeName || "#00f889";
+      if (triggerElement) triggerElement.setAttribute("theme-name", color);
+      injectPublicScript("theme.js", { "data-color": color });
+      injectPublicStyle("theme.css");
 
       console.log(installed);
 
@@ -171,6 +124,12 @@ export default defineContentScript({
 
     // 실시간 변경 반영: storage 변경을 페이지로 계속 포워딩
     browser.storage.onChanged.addListener((changes, area) => {
+      const localKey = `local:${STORAGE_KEY}`;
+      if (changes[localKey]) {
+        const newVal = changes[localKey].newValue ?? {};
+        sendOptionData(newVal);
+        return;
+      }
       if (changes[STORAGE_KEY]) {
         const newVal = changes[STORAGE_KEY].newValue ?? {};
         sendOptionData(newVal);

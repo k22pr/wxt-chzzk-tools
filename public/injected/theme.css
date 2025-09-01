@@ -1,0 +1,36 @@
+:root {
+  --Ref-Color-BrandNeon-70: var(--chzzk-tools-primary-week) !important;
+  --Ref-Color-BrandNeon-80: var(--chzzk-tools-primary-week) !important;
+  --Ref-Color-BrandNeon-60: var(--chzzk-tools-primary-02) !important;
+  --Ref-Color-BrandNeon-55: var(--chzzk-tools-primary-02) !important;
+  --Ref-Color-BrandNeon-50: var(--chzzk-tools-primary-02) !important;
+
+  --Surface-Brand-Stronger: var(--chzzk-tools-primary-02) !important;
+  --Content-Brand-Base-Static: var(--chzzk-tools-primary-02) !important;
+  --color-content-chzzk-02: var(--chzzk-tools-primary-02) !important;
+  --Content-Brand-Strong: var(--chzzk-tools-primary-02) !important;
+  --Border-Brand-Strong: var(--chzzk-tools-primary-02) !important;
+
+  --Ref-Color-BrandNeon-50-rgb: var(--chzzk-tools-primary-rgb) !important;
+  --Border-Brand-Alpha-Base-Static: rgba(
+    var(--chzzk-tools-primary-rgb),
+    0.3
+  ) !important;
+}
+
+button[class*="button_primary__"],
+button[class*="button_highlight__"] {
+  color: #fff !important;
+}
+
+[class*="video_information_is_live__"],
+[class*="home_recommend_live_profile__"],
+[class*="exclusive_profile__"],
+[class*="navigator_is_live__"] {
+  background-image: linear-gradient(var(--color-bg-01), var(--color-bg-01)),
+    linear-gradient(
+      180deg,
+      var(--chzzk-tools-primary-02) 0,
+      var(--chzzk-tools-primary-dark) 100%
+    ) !important;
+}

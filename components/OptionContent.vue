@@ -1,16 +1,26 @@
 <script lang="ts" setup>
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
+
+import colorMap from "@/data/color-map";
+
+// import colorMap from "@/public/injected/color-map.js";
+
+const emit = defineEmits<{
+  (e: "update-color", color: string): void;
+}>();
 const DEFAULT_OPTIONS = {
   useAutoQuality: true,
   useLiveBar: true,
   useStreamDesign: false,
+  themeName: "primary",
 };
 
 const options = reactive({
   useAutoQuality: true,
   useLiveBar: true,
   useStreamDesign: false,
+  themeName: "primary",
 });
 
 onMounted(async () => {
@@ -32,6 +42,14 @@ watch(
   { deep: true }
 );
 
+// 색상 변경 시 부모로 즉시 통지하여 테마에 반영
+watch(
+  () => options.themeName,
+  (color) => {
+    if (typeof color === "string" && color) emit("update-color", color);
+  }
+);
+
 const toggleOption = (
   option: "useStreamDesign" | "useAutoQuality" | "useLiveBar"
 ) => {
@@ -41,6 +59,24 @@ const toggleOption = (
 
 <template>
   <div w="full" grid gap="4">
+    <div w="full" grid gap="2">
+      <div w="full" flex items="top" class="flex" justify="between">
+        <div w="full">
+          <div text="4">대표 색상</div>
+        </div>
+        <div flex items="center" gap="2">
+          <button
+            class="color-button"
+            v-for="(color, index) in Object.keys(colorMap)"
+            :key="index"
+            :class="`${color} ${options.themeName === color ? 'active' : ''}`"
+            @click="options.themeName = color"
+            shape="circle"
+            size="small"
+          />
+        </div>
+      </div>
+    </div>
     <div w="full" grid gap="2">
       <div w="full" flex items="top" class="flex" justify="between">
         <div w="full">
@@ -83,8 +119,75 @@ const toggleOption = (
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .read-the-docs {
   color: #888;
+}
+
+.color-button {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 0px;
+  transition: 0.2s;
+  cursor: pointer;
+  opacity: 0.8;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &.active {
+    border: 1px solid #fff;
+    opacity: 1;
+  }
+  &.primary {
+    background-color: #00f889;
+    &.active {
+      outline: 3px solid rgba(0, 248, 137, 0.5);
+    }
+  }
+  &.gray {
+    background-color: #d9d9d9;
+    &.active {
+      outline: 3px solid rgba(217, 217, 217, 0.5);
+    }
+  }
+  &.red {
+    background-color: #ff4d4f;
+    &.active {
+      outline: 3px solid rgba(255, 77, 79, 0.5);
+    }
+  }
+  &.orange {
+    background-color: #ff922b;
+    &.active {
+      outline: 3px solid rgba(255, 146, 43, 0.5);
+    }
+  }
+  &.yellow {
+    background-color: #fab005;
+    &.active {
+      outline: 3px solid rgba(255, 176, 5, 0.5);
+    }
+  }
+  &.blue {
+    background-color: #339af0;
+    &.active {
+      outline: 3px solid rgba(51, 154, 240, 0.5);
+    }
+  }
+  &.violet {
+    background-color: #845ef7;
+    &.active {
+      outline: 3px solid rgba(132, 94, 247, 0.5);
+    }
+  }
+  &.pink {
+    background-color: #f06595;
+    &.active {
+      outline: 3px solid rgba(240, 101, 149, 0.5);
+    }
+  }
 }
 </style>
