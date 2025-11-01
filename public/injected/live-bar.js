@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 (function () {
+  const VIDEO_LAYOUT_NAME = "div#live_player_layout";
   const VIDEO_ELEMENT_NAME = "video.webplayer-internal-video";
   const BOTTOM_SEL = "div.pzp-pc__bottom";
   const EDGE_EPS = 0.5;
@@ -25,13 +26,13 @@
       .live-bar-box .go.live{background:rgb(221, 51, 51);box-shadow:0px 0px 4px rgba(221, 51, 51, 0.5);}
       .live-bar-box .t{white-space:nowrap;min-width:20px;text-align:center}
       .live-bar-box .time{display:flex;gap:4px;align-items:center}
-      .live-bar-box .slide-box{display:flex;flex:1;position:relative;align-items:center;width:100%; height:3px;padding:8px 0px;cursor:pointer}
+      .live-bar-box .slide-box{display:flex;flex:1;position:relative;align-items:center;width:100%; height:4px;padding:8px 0px;cursor:pointer;background:transparent;}
       .live-bar-box .slide-box:hover{height:6px;}
-      .live-bar-box .slide-box div{transition:height 0.2s;}
-      .live-bar-box .slide-box .track{position:absolute;left:0px;width:100%;height:3px;background:rgba(255,255,255,0.5);}
-      .live-bar-box .slide-box .rng{position:absolute;left:0px;height:3px;background:#00f889;transition:width 0.1s;transition-delay: 0.1}
+      .live-bar-box .slide-box div{transition:width 0.1s, height 0.2s;}
+      .live-bar-box .slide-box .track{position:absolute;left:0px;width:100%;height:2px;border-radius:3px;background:rgba(255,255,255,0.5);}
+      .live-bar-box .slide-box .rng{position:absolute;left:0px;height:2px;border-radius:3px;background:var(--chzzk-tools-primary-02);}
       .live-bar-box .slide-box:hover .track{height:6px;border-radius:3px;box-shadow:0px 0px 4px rgba(0,0,0,0.3);}
-      .live-bar-box .slide-box:hover .rng{height:6px;border-radius:3px;box-shadow:0px 0px 5px #00f889;}
+      .live-bar-box .slide-box:hover .rng{height:6px;border-radius:3px;box-shadow:0px 0px 5px var(--chzzk-tools-primary-02);}
       .live-bar-box.no-anim .slide-box .rng { transition: none !important; }
 
       .live-bar-box .hover-tip{
@@ -241,23 +242,25 @@
     }
 
     slide.addEventListener("mousedown", seekFromClick);
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
+    document
+      .querySelector(VIDEO_LAYOUT_NAME)
+      ?.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
 
-        wrap.classList.add("no-anim");
+          wrap.classList.add("no-anim");
 
-        if (e.key === "ArrowLeft") {
-          seekTo(parseFloat(v.currentTime) - 5);
-        } else if (e.key === "ArrowRight") {
-          seekTo(parseFloat(v.currentTime) + 5);
+          if (e.key === "ArrowLeft") {
+            seekTo(parseFloat(v.currentTime) - 5);
+          } else if (e.key === "ArrowRight") {
+            seekTo(parseFloat(v.currentTime) + 5);
+          }
+
+          requestAnimationFrame(() => wrap.classList.remove("no-anim"));
         }
-
-        requestAnimationFrame(() => wrap.classList.remove("no-anim"));
-      }
-    });
+      });
 
     btn.addEventListener("click", () => {
       const { end, ok } = getEdges(v);
