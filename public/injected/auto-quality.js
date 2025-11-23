@@ -37,7 +37,9 @@
     await new Promise((r) =>
       requestAnimationFrame(() => requestAnimationFrame(r))
     );
-    const hasLive = location.pathname.includes("/live/");
+    const hasLive =
+      location.pathname.includes("/live/") ||
+      location.pathname.includes("/video/");
     const videoEl = document.querySelector(VIDEO_ELEMENT_NAME);
     const items = [
       ...new Set([...document.querySelectorAll(QUALITY_ELEMENT_NAME)]),
