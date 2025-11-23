@@ -1,5 +1,5 @@
 {
-  "name": "치직툴 (chzzk-tools)",
+  "name": "chzzk-tools",
   "description": "치지직 방송시청과 관련된 유틸을 제공합니다.",
   "private": true,
   "version": "0.0.5",
@@ -15,6 +15,7 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "@usal/vue": "^1.2.1",
     "ant-design-vue": "4.x",
     "vue": "^3.5.13"
   },
