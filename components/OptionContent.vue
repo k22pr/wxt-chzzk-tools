@@ -58,8 +58,8 @@ const toggleOption = (
 </script>
 
 <template>
-  <div w="full" grid gap="4">
-    <div w="full" grid gap="2">
+  <div w="full" grid gap="4" pt="3">
+    <!-- <div w="full" grid gap="2">
       <div w="full" flex items="top" class="flex" justify="between">
         <div w="full">
           <div text="4">대표 색상</div>
@@ -76,7 +76,7 @@ const toggleOption = (
           />
         </div>
       </div>
-    </div>
+    </div> -->
     <div w="full" grid gap="2">
       <div w="full" flex items="top" class="flex" justify="between">
         <div w="full">

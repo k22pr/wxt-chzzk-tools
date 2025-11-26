@@ -7,12 +7,14 @@ export default defineConfig({
     excludeEntrypoints: ["background"],
   },
   manifest: {
+    name: "치직툴 (chzzk-tools)",
     permissions: ["storage"],
+    host_permissions: ["https://chzzk.naver.com/*"],
     web_accessible_resources: [
       {
         resources: [
-          // public/ 폴더 기준 경로
           "injected/status.js",
+          "injected/bypass.js",
           "injected/auto-quality.js",
           "injected/live-bar.js",
           "injected/stream-design.css",
@@ -26,7 +28,7 @@ export default defineConfig({
   },
   webExt: {
     startUrls: [
-      "https://chzzk.naver.com/live/9199eb6eb3dea874f47bbb35bd1dfee2",
+      "https://chzzk.naver.com/live/3497a9a7221cc3ee5d3f95991d9f95e9",
     ],
   },
 });

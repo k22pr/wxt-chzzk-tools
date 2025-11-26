@@ -10,6 +10,20 @@ let installed = {
   streamDesign: false,
 };
 
+function loadedInjectPublicScript(
+  file: string,
+  attrs: Record<string, string> = {}
+) {
+  // 페이지 로드 시점 보정
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      injectPublicScript(file, attrs);
+    });
+  } else {
+    injectPublicScript(file, attrs);
+  }
+}
+
 function injectPublicScript(file: string, attrs: Record<string, string> = {}) {
   const url = browser.runtime.getURL(`injected/${file}` as any);
   const s = document.createElement("script");
@@ -47,7 +61,7 @@ export default defineContentScript({
     // triggerElement?.setAttribute("installed-auto-quality", "false");
     // triggerElement?.setAttribute("installed-stream-design", "false");
     document.body.appendChild(triggerElement);
-    injectPublicScript("status.js");
+    loadedInjectPublicScript("status.js");
 
     // 옵션을 읽어 페이지로 postMessage 전달
     let options = await storage.getItem(`local:${STORAGE_KEY}`);
@@ -58,10 +72,6 @@ export default defineContentScript({
         useLiveBar: true,
         themeName: "primary",
       };
-    }
-
-    function postPageMessage(type: string, payload?: any) {
-      window.postMessage({ __CHZZK_TOOLS__: { type, payload } }, "*");
     }
 
     async function sendOptionData(data: any) {
@@ -81,14 +91,14 @@ export default defineContentScript({
 
       const color = data?.themeName || "#00f889";
       if (triggerElement) triggerElement.setAttribute("theme-name", color);
-      injectPublicScript("theme.js", { "data-color": color });
-      injectPublicStyle("theme.css");
+      // injectPublicScript("theme.js", { "data-color": color });
+      // injectPublicStyle("theme.css");
 
       console.log(installed);
 
       // Live Bar
       if (data?.useLiveBar && !installed.liveBar) {
-        injectPublicScript("live-bar.js");
+        loadedInjectPublicScript("live-bar.js");
         installed.liveBar = true;
         // postPageMessage("ENABLE_LIVE_BAR");
       } else {
@@ -97,7 +107,8 @@ export default defineContentScript({
 
       // Auto Quality
       if (data?.useAutoQuality && !installed.autoQuality) {
-        injectPublicScript("auto-quality.js");
+        loadedInjectPublicScript("bypass.js");
+        loadedInjectPublicScript("auto-quality.js");
         installed.autoQuality = true;
         // postPageMessage("ENABLE_AUTO_QUALITY");
       } else {
