@@ -1,6 +1,7 @@
 (function () {
   ("use strict");
 
+  const VIDEO_SELECTOR = "video.webplayer-internal-video";
   const NAME = "chzzk-tools";
 
   function modifyDataObject(data) {
@@ -13,7 +14,6 @@
         try {
           Object.defineProperty(data.content, "p2pQuality", {
             configurable: false,
-
             writable: false,
           });
         } catch (e) {}
@@ -105,7 +105,7 @@
     console.log(`[${NAME}] fetch patched`);
   })(); // Patch XMLHttpRequest
 
-  (function patchXHR() {
+  function patchXHR() {
     const proto = XMLHttpRequest.prototype;
 
     const origOpen = proto.open;
@@ -147,23 +147,65 @@
     };
 
     console.log(`[${NAME}] XHR patched`);
-  })();
+  }
 
-  // SPA URL change
-  (function () {
-    const fireLoc = () => setTimeout(() => scan(document), 0);
-    const _ps = history.pushState,
-      _rs = history.replaceState;
+  // SPA 네비게이션/DOM 변경 시마다 재스캔
+  function setupMutationObserver() {
+    const root = document.documentElement || document.body;
+    if (!root) return;
+
+    const mo = new MutationObserver(function (mutations) {
+      for (const m of mutations) {
+        m.addedNodes.forEach(function (node) {
+          if (!(node instanceof Element)) return;
+          if (node.matches && node.matches(VIDEO_SELECTOR)) {
+            patchXHR();
+          } else if (node.querySelector) {
+            const v = node.querySelector(VIDEO_SELECTOR);
+            if (v) patchXHR();
+          }
+        });
+      }
+    });
+
+    mo.observe(root, { childList: true, subtree: true });
+  }
+
+  // SPA URL 변경 감지용 history 패치
+  function patchHistoryForSPA() {
+    const _ps = history.pushState;
+    const _rs = history.replaceState;
+
+    const fire = function () {
+      setTimeout(function () {
+        patchXHR();
+      }, 0);
+    };
+
     history.pushState = function () {
       const r = _ps.apply(this, arguments);
-      fireLoc();
+      fire();
       return r;
     };
+
     history.replaceState = function () {
       const r = _rs.apply(this, arguments);
-      fireLoc();
+      fire();
       return r;
     };
-    window.addEventListener("popstate", fireLoc);
-  })();
+
+    window.addEventListener("popstate", fire);
+  }
+
+  function init() {
+    patchXHR();
+    setupMutationObserver();
+    patchHistoryForSPA();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
 })();

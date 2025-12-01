@@ -53,7 +53,16 @@ function removePublicStyle() {
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
+  runAt: "document_start",
   async main() {
+    injectPublicScript("bypass.js");
+
+    if (document.readyState === "loading") {
+      await new Promise((r) =>
+        document.addEventListener("DOMContentLoaded", r)
+      );
+    }
+
     triggerElement = document.createElement("div");
     triggerElement.id = "chzzk-tools-trigger";
     triggerElement.style.display = "none";
@@ -107,7 +116,7 @@ export default defineContentScript({
 
       // Auto Quality
       if (data?.useAutoQuality && !installed.autoQuality) {
-        loadedInjectPublicScript("bypass.js");
+        // loadedInjectPublicScript("bypass.js"); // Already injected at start
         loadedInjectPublicScript("auto-quality.js");
         installed.autoQuality = true;
         // postPageMessage("ENABLE_AUTO_QUALITY");
