@@ -4,8 +4,11 @@ import OptionContent from "@/components/OptionContent.vue";
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
 
+import packageJson from "../../package.json";
+
 // 대표 색상 상태 (기본값)
 const colorPrimary = ref<string>("#00f889");
+const version = packageJson.version;
 
 const isLoaded = ref(false);
 
@@ -63,7 +66,11 @@ const onUpdateColor = (color: string) => {
             my="4"
           />
         </div>
-        <h1 text="center">Chzzk Tools</h1>
+        <div flex justify="center" items="end" gap="2">
+          <div text="xs gray-6" opacity-0 font="mono">v{{ version }}</div>
+          <div text="20px center" font="medium">Chzzk Tools</div>
+          <div text="xs gray-6" font="mono">v{{ version }}</div>
+        </div>
       </div>
       <div w="full" px="4" v-if="isLoaded">
         <OptionContent @update-color="onUpdateColor" />
