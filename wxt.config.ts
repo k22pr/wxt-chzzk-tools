@@ -21,6 +21,7 @@ export default defineConfig({
           "injected/stream-design.css",
           "injected/stream-design.js",
           "injected/stream-design.js",
+          "injected/global.style.css",
           // "injected/theme.css",
           // "injected/theme.js",
         ],

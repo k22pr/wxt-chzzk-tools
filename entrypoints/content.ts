@@ -59,6 +59,7 @@ export default defineContentScript({
     injectPublicScript("bypass.js", {
       "data-debug": String(import.meta.env.DEV),
     });
+    injectPublicStyle("global.style.css");
 
     if (document.readyState === "loading") {
       await new Promise((r) =>
