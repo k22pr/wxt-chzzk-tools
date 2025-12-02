@@ -1,5 +1,6 @@
 import { STORAGE_KEY } from "@/constants";
 import { storage } from "wxt/utils/storage";
+import show from "@/utility/show";
 
 let cssLink: HTMLLinkElement | null = null;
 let triggerElement: HTMLDivElement | null = null;
@@ -33,7 +34,7 @@ function injectPublicScript(file: string, attrs: Record<string, string> = {}) {
   (document.head || document.documentElement).appendChild(s);
   s.remove();
 
-  console.log("[chzzk-tools] injectPublicScript", url, file);
+  show.log("injectPublicScript", url, file);
 }
 
 function injectPublicStyle(file: string) {
@@ -55,7 +56,9 @@ export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   runAt: "document_start",
   async main() {
-    injectPublicScript("bypass.js");
+    injectPublicScript("bypass.js", {
+      "data-debug": String(import.meta.env.DEV),
+    });
 
     if (document.readyState === "loading") {
       await new Promise((r) =>
@@ -103,7 +106,7 @@ export default defineContentScript({
       // injectPublicScript("theme.js", { "data-color": color });
       // injectPublicStyle("theme.css");
 
-      console.log(installed);
+      show.log(installed);
 
       // Live Bar
       if (data?.useLiveBar && !installed.liveBar) {
@@ -126,10 +129,10 @@ export default defineContentScript({
 
       // Stream Design (CSS + optional JS)
       // if (data?.useStreamDesign) {
-      //   injectPublicStyle("stream-design.css");
       //   injectPublicScript("stream-design.js");
 
       //   if (!installed.streamDesign) {
+      //   injectPublicStyle("stream-design.css");
       //     console.log(data);
       //     // injectPublicScript("stream-design.js");
       //     installed.streamDesign = true;

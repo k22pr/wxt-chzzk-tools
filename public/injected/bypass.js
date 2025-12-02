@@ -1,5 +1,14 @@
 (function () {
-  ("use strict");
+  "use strict";
+
+  const isDebug =
+    document.currentScript &&
+    document.currentScript.getAttribute("data-debug") === "true";
+
+  const log = {
+    info: (...args) => isDebug && console.log(...args),
+    error: (...args) => isDebug && console.error(...args),
+  };
 
   const VIDEO_SELECTOR = "video.webplayer-internal-video";
   const NAME = "chzzk-tools";
@@ -56,7 +65,7 @@
         }
       }
     } catch (err) {
-      console.error(`[${NAME}] modifyDataObject error:`, err);
+      log.error(`[${NAME}] modifyDataObject error:`, err);
     }
 
     return data;
@@ -95,14 +104,14 @@
             });
           }
         } catch (err) {
-          console.error(`[${NAME}] fetch patch error:`, err);
+          log.error(`[${NAME}] fetch patch error:`, err);
         }
 
         return resp;
       });
     };
 
-    console.log(`[${NAME}] fetch patched`);
+    log.info(`[${NAME}] fetch patched`);
   })(); // Patch XMLHttpRequest
 
   function patchXHR() {
@@ -138,7 +147,7 @@
               get: () => JSON.stringify(data),
             });
           } catch (err) {
-            console.error(`[${NAME}] XHR patch error:`, err);
+            log.error(`[${NAME}] XHR patch error:`, err);
           }
         }
       });
@@ -146,7 +155,7 @@
       return origSend.apply(this, arguments);
     };
 
-    console.log(`[${NAME}] XHR patched`);
+    log.info(`[${NAME}] XHR patched`);
   }
 
   // SPA 네비게이션/DOM 변경 시마다 재스캔
