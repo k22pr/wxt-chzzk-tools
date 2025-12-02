@@ -1,6 +1,6 @@
 import { createApp, ComponentPublicInstance } from "vue";
-import VideoOverlay from "@/components/VideoOverlay.vue";
-import ControlBarButton from "@/components/ControlBarButton.vue";
+import VideoOverlay from "@/components/injected/VideoOverlay.vue";
+import ControlBarButton from "@/components/injected/ControlBarButton.vue";
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
@@ -28,7 +28,93 @@ export default defineContentScript({
       }
     >();
 
-    function setupAudioForVideo(video: Element) {
+    type CompressorParams = {
+      threshold: number;
+      knee: number;
+      ratio: number;
+      attack: number;
+      release: number;
+      gain: number;
+      filterGain: number;
+      filterFrequency: number;
+      volume?: number;
+      version?: number;
+      expiresAt?: number;
+    };
+
+    const STORAGE_KEY_PREFIX = "chzzk-tools-comp:";
+    const STORAGE_VERSION = 1;
+    // 기본 유효기간: 30일 (ms)
+    const STORAGE_TTL_MS = 1000 * 60 * 60 * 24 * 30;
+
+    function getChannelIdFromLocation(): string | null {
+      try {
+        const pathname = window.location.pathname;
+        const liveMatch = pathname.match(/\/live\/([^/?#]+)/);
+        if (liveMatch) return liveMatch[1];
+
+        const videoMatch = pathname.match(/\/video\/([^/?#]+)/);
+        if (videoMatch) return videoMatch[1];
+
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    function loadParamsForChannel(channelId: string): CompressorParams | null {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY_PREFIX + channelId);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as CompressorParams;
+        if (!parsed) {
+          window.localStorage.removeItem(STORAGE_KEY_PREFIX + channelId);
+          return null;
+        }
+
+        const now = Date.now();
+        // 만료된 데이터라면 제거 후 무시
+        if (parsed.expiresAt && parsed.expiresAt < now) {
+          window.localStorage.removeItem(STORAGE_KEY_PREFIX + channelId);
+          return null;
+        }
+
+        // 유효한 데이터면 그대로 사용 (접속 시에는 쓰기 발생 X)
+        return parsed;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveParamsForChannel(channelId: string, params: CompressorParams) {
+      try {
+        const now = Date.now();
+        const payload: CompressorParams = {
+          ...params,
+          version: STORAGE_VERSION,
+          expiresAt: now + STORAGE_TTL_MS,
+        };
+        window.localStorage.setItem(
+          STORAGE_KEY_PREFIX + channelId,
+          JSON.stringify(payload)
+        );
+      } catch {
+        // ignore
+      }
+    }
+
+    function clearParamsForChannel(channelId: string) {
+      try {
+        window.localStorage.removeItem(STORAGE_KEY_PREFIX + channelId);
+      } catch {
+        // ignore
+      }
+    }
+
+    function setupAudioForVideo(
+      video: Element,
+      initialParams?: CompressorParams | null
+    ) {
       if (audioChainMap.has(video)) return;
 
       const media = video as HTMLMediaElement;
@@ -47,7 +133,7 @@ export default defineContentScript({
 
       // 기본 필터/게인 설정 (필요 시 수정 가능)
       filter.type = "peaking";
-      filter.frequency.value = 1000; // 1kHz 근처 대역
+      filter.frequency.value = 1000;
       filter.Q.value = 1;
       filter.gain.value = 0;
 
@@ -67,6 +153,54 @@ export default defineContentScript({
       };
       media.addEventListener("play", resumeContext, { passive: true });
 
+      // 첫 클릭(pointerdown) 시에도 resume 시도 (음소거 해제 버튼 클릭 등 포함)
+      const handlePointerDown = () => {
+        resumeContext();
+        document.removeEventListener("pointerdown", handlePointerDown);
+      };
+      document.addEventListener("pointerdown", handlePointerDown, {
+        once: true,
+        passive: true,
+      });
+
+      media.addEventListener("volumechange", () => {
+        const channelId = getChannelIdFromLocation();
+        if (!channelId) return;
+
+        const chain = audioChainMap.get(video);
+        if (!chain) return;
+
+        const c = chain.compressor;
+        const g = chain.gain;
+        const f = chain.filter;
+
+        const params: CompressorParams = {
+          threshold: c.threshold.value,
+          knee: c.knee.value,
+          ratio: c.ratio.value,
+          attack: c.attack.value,
+          release: c.release.value,
+          gain: g.gain.value,
+          filterGain: f.gain.value,
+          filterFrequency: f.frequency.value,
+          volume: media.volume,
+        };
+
+        saveParamsForChannel(channelId, params);
+      });
+
+      if (initialParams) {
+        compressor.threshold.value = initialParams.threshold;
+        compressor.knee.value = initialParams.knee;
+        compressor.ratio.value = initialParams.ratio;
+        compressor.attack.value = initialParams.attack;
+        compressor.release.value = initialParams.release;
+
+        gain.gain.value = initialParams.gain;
+        filter.gain.value = initialParams.filterGain;
+        filter.frequency.value = initialParams.filterFrequency;
+      }
+
       audioChainMap.set(video, { context, source, filter, compressor, gain });
     }
 
@@ -77,8 +211,24 @@ export default defineContentScript({
 
       mountedVideos.add(video);
 
+      const channelId = getChannelIdFromLocation();
+      const savedParams = channelId ? loadParamsForChannel(channelId) : null;
+
       // 0. 비디오 오디오를 AudioContext + DynamicsCompressor로 연결
-      setupAudioForVideo(video);
+      // 페이지 로드 직후에는 체인을 붙이지 않고, 약간의 딜레이 후 한 번만 연결
+      setTimeout(() => {
+        if (audioChainMap.has(video)) return;
+        setupAudioForVideo(video, savedParams ?? undefined);
+      }, 500);
+
+      // 저장된 볼륨이 있으면 적용, 없으면 100%로 설정 후 음소거 해제
+      const media = video as HTMLMediaElement;
+      if (typeof savedParams?.volume === "number") {
+        media.volume = savedParams.volume;
+      } else {
+        media.volume = 1;
+      }
+      media.muted = false;
 
       if (!document.getElementById("chzzk-video-overlay-style")) {
         const style = document.createElement("style");
@@ -105,6 +255,7 @@ export default defineContentScript({
           const c = chain.compressor;
           const g = chain.gain;
           const f = chain.filter;
+          const media = video as HTMLMediaElement;
           return {
             threshold: c.threshold.value,
             knee: c.knee.value,
@@ -114,18 +265,10 @@ export default defineContentScript({
             gain: g.gain.value,
             filterGain: f.gain.value,
             filterFrequency: f.frequency.value,
+            volume: media.volume,
           };
         },
-        setCompressorParams: (params: {
-          threshold: number;
-          knee: number;
-          ratio: number;
-          attack: number;
-          release: number;
-          gain: number;
-          filterGain: number;
-          filterFrequency: number;
-        }) => {
+        setCompressorParams: (params: CompressorParams) => {
           const chain = audioChainMap.get(video);
           if (!chain) return;
           const c = chain.compressor;
@@ -141,6 +284,37 @@ export default defineContentScript({
           g.gain.value = params.gain;
           f.gain.value = params.filterGain;
           f.frequency.value = params.filterFrequency;
+
+          // 저장 시점의 비디오 볼륨을 함께 저장
+          if (channelId) {
+            const media = video as HTMLMediaElement;
+            const payload: CompressorParams = {
+              ...params,
+              volume: media.volume,
+            };
+            saveParamsForChannel(channelId, payload);
+          }
+        },
+        applyParamsOnly: (params: CompressorParams) => {
+          const chain = audioChainMap.get(video);
+          if (!chain) return;
+          const c = chain.compressor;
+          const g = chain.gain;
+          const f = chain.filter;
+
+          c.threshold.value = params.threshold;
+          c.knee.value = params.knee;
+          c.ratio.value = params.ratio;
+          c.attack.value = params.attack;
+          c.release.value = params.release;
+
+          g.gain.value = params.gain;
+          f.gain.value = params.filterGain;
+          f.frequency.value = params.filterFrequency;
+        },
+        clearStoredParams: () => {
+          if (!channelId) return;
+          clearParamsForChannel(channelId);
         },
       });
       const instance = app.mount(container as HTMLElement);

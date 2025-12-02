@@ -2,7 +2,7 @@
   "name": "chzzk-tools",
   "description": "치지직 방송시청과 관련된 유틸을 제공합니다.",
   "private": true,
-  "version": "0.0.8",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",

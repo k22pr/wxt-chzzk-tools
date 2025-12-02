@@ -5,6 +5,7 @@ console.log("hello");
 </script>
 
 <template>
+  <span class="pzp-button__tooltip pzp-button__tooltip--top">Compressor</span>
   <button
     class="chzzk-tool-btn"
     @click.stop="emit('click')"
@@ -16,7 +17,6 @@ console.log("hello");
       height="18"
       viewBox="0 0 14 14"
     >
-      <!-- Icon from Streamline by Streamline - https://creativecommons.org/licenses/by/4.0/ -->
       <path
         fill="none"
         stroke="currentColor"
