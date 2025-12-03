@@ -12,6 +12,7 @@ const emit = defineEmits<{
 const DEFAULT_OPTIONS = {
   useAutoQuality: true,
   useLiveBar: true,
+  useVideoOverlay: true,
   useStreamDesign: false,
   themeName: "primary",
 };
@@ -19,6 +20,7 @@ const DEFAULT_OPTIONS = {
 const options = reactive({
   useAutoQuality: true,
   useLiveBar: true,
+  useVideoOverlay: true,
   useStreamDesign: false,
   themeName: "primary",
 });
@@ -100,6 +102,19 @@ const toggleOption = (
         </div>
         <div>
           <a-switch v-model:checked="options.useLiveBar" />
+        </div>
+      </div>
+    </div>
+    <div w="full" grid gap="2">
+      <div w="full" flex items="top" justify="between">
+        <div w="full">
+          <div text="4">영상 오버레이 / 음향 보정</div>
+          <div text="3 gray-5">
+            볼륨/음질을 세밀하게 조절할 수 있는 오버레이를 표시합니다.
+          </div>
+        </div>
+        <div>
+          <a-switch v-model:checked="options.useVideoOverlay" />
         </div>
       </div>
     </div>

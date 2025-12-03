@@ -1,12 +1,28 @@
 import { createApp, ComponentPublicInstance } from "vue";
 import VideoOverlay from "@/components/injected/VideoOverlay.vue";
 import ControlBarButton from "@/components/injected/ControlBarButton.vue";
+import { storage } from "wxt/utils/storage";
+import { STORAGE_KEY } from "@/constants";
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   cssInjectionMode: "ui",
 
   async main(ctx) {
+    try {
+      const saved = (await storage.getItem(`local:${STORAGE_KEY}`)) as {
+        useVideoOverlay?: boolean;
+      } | null;
+
+      console.log("saved", saved);
+
+      if (saved && saved.useVideoOverlay === false) {
+        return;
+      }
+    } catch {
+      // 옵션 로드 실패 시 기본값(사용)으로 진행
+    }
+
     const VIDEO_SELECTOR = "video.webplayer-internal-video";
     const CONTROL_BAR_LEFT_SELECTOR = "div.pzp-pc__bottom-buttons-right";
 

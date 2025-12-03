@@ -1,17 +1,101 @@
 (function () {
   "use strict";
-
-  const isDebug =
-    document.currentScript &&
-    document.currentScript.getAttribute("data-debug") === "true";
-
-  const log = {
-    info: (...args) => isDebug && console.log(...args),
-    error: (...args) => isDebug && console.error(...args),
-  };
-
   const VIDEO_SELECTOR = "video.webplayer-internal-video";
   const NAME = "chzzk-tools";
+
+  function overload(target, prop, value, options) {
+    const opts = {
+      force: false,
+      configurable: false,
+      writable: false,
+      ...(options || {}),
+    };
+
+    try {
+      let t = target;
+      while (t !== null) {
+        const desc = Object.getOwnPropertyDescriptor(t, prop);
+        if (desc && desc.configurable) {
+          const attrs = { configurable: opts.configurable, enumerable: true };
+          if (desc.get) {
+            attrs.get = () => value;
+          } else {
+            attrs.value = value;
+            attrs.writable = opts.writable;
+          }
+          Object.defineProperty(t, prop, attrs);
+        } else if (
+          opts.force &&
+          Object.getPrototypeOf(target) === Object.getPrototypeOf(t)
+        ) {
+          Object.defineProperty(t, prop, {
+            value,
+            configurable: opts.configurable,
+            enumerable: true,
+            writable: opts.writable,
+          });
+        }
+        t = Object.getPrototypeOf(t);
+      }
+    } catch (e) {}
+  }
+
+  function patchNavigator(n) {
+    if (!n || typeof n !== "object" || !("userAgent" in n)) return;
+
+    const spoofedUA =
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 OPR/65.0.3467.48";
+
+    overload(n, "userAgent", spoofedUA, {
+      force: true,
+      configurable: true,
+      writable: false,
+    });
+
+    if (n.userAgentData) {
+      const originalUAData = n.userAgentData;
+      const spoofedUAData = {
+        get brands() {
+          return originalUAData.brands;
+        },
+        get mobile() {
+          return originalUAData.mobile;
+        },
+        get platform() {
+          return "macOS";
+        },
+        getHighEntropyValues: async (hints) => {
+          const values = await originalUAData.getHighEntropyValues(hints);
+          return { ...values, platform: "macOS" };
+        },
+        toJSON: () => {
+          return {
+            brands: originalUAData.brands,
+            mobile: originalUAData.mobile,
+            platform: "macOS",
+          };
+        },
+      };
+
+      overload(n, "userAgentData", spoofedUAData, {
+        force: true,
+        configurable: true,
+        writable: false,
+      });
+    }
+  }
+
+  try {
+    if (navigator.userAgent.includes("Windows")) {
+      patchNavigator(navigator);
+      console.log(
+        `[${NAME}] UserAgent & Platform spoofed to Mac`,
+        navigator.userAgent
+      );
+    }
+  } catch (e) {
+    console.error(`[${NAME}] UserAgent spoof error:`, e);
+  }
 
   function modifyDataObject(data) {
     try {
@@ -65,7 +149,7 @@
         }
       }
     } catch (err) {
-      log.error(`[${NAME}] modifyDataObject error:`, err);
+      console.error(`[${NAME}] modifyDataObject error:`, err);
     }
 
     return data;
@@ -81,6 +165,12 @@
       return _fetch(input, init).then(async (resp) => {
         try {
           if (url && url.includes("live-detail")) {
+            console.log("[chzzk-tools] /live-detail 호출", {
+              href: window.location.href,
+              time: new Date().toISOString(),
+            });
+            console.trace("[chzzk-tools] /live-detail call stack");
+
             const clone = resp.clone();
 
             const text = await clone.text();
@@ -102,60 +192,59 @@
 
               headers: headers,
             });
+          } else {
+            console.log("live-detail not found");
+            return resp;
           }
         } catch (err) {
-          log.error(`[${NAME}] fetch patch error:`, err);
+          console.error(`[${NAME}] fetch patch error:`, err);
         }
 
         return resp;
       });
     };
 
-    log.info(`[${NAME}] fetch patched`);
+    console.info(`[${NAME}] fetch patched`);
   })(); // Patch XMLHttpRequest
 
   function patchXHR() {
-    const proto = XMLHttpRequest.prototype;
-
-    const origOpen = proto.open;
-
-    const origSend = proto.send;
-
-    proto.open = function (method, url) {
-      this.__chzzk_url = url;
-
-      return origOpen.apply(this, arguments);
-    };
-
-    proto.send = function (body) {
-      this.addEventListener("readystatechange", function () {
-        if (
-          this.readyState === 4 &&
-          this.__chzzk_url &&
-          this.__chzzk_url.includes("live-detail")
-        ) {
-          try {
-            let data = JSON.parse(this.responseText);
-
-            data = modifyDataObject(data);
-
-            Object.defineProperty(this, "responseText", {
-              get: () => JSON.stringify(data),
-            });
-
-            Object.defineProperty(this, "response", {
-              get: () => JSON.stringify(data),
-            });
-          } catch (err) {
-            log.error(`[${NAME}] XHR patch error:`, err);
-          }
-        }
-      });
-
-      return origSend.apply(this, arguments);
-    };
-
-    log.info(`[${NAME}] XHR patched`);
+    // const proto = XMLHttpRequest.prototype;
+    // const origOpen = proto.open;
+    // const origSend = proto.send;
+    // proto.open = function (method, url) {
+    //   this.__chzzk_url = url;
+    //   return origOpen.apply(this, arguments);
+    // };
+    // proto.send = function (body) {
+    //   this.addEventListener("readystatechange", function () {
+    //     if (
+    //       this.readyState === 4 &&
+    //       this.__chzzk_url &&
+    //       this.__chzzk_url.includes("live-detail")
+    //     ) {
+    //       console.log("[chzzk-tools] /live-detail 호출 (XHR)", {
+    //         href: window.location.href,
+    //         time: new Date().toISOString(),
+    //       });
+    //       try {
+    //         let data = JSON.parse(this.responseText);
+    //         data = modifyDataObject(data);
+    //         Object.defineProperty(this, "responseText", {
+    //           get: () => JSON.stringify(data),
+    //           configurable: true,
+    //         });
+    //         Object.defineProperty(this, "response", {
+    //           get: () => JSON.stringify(data),
+    //           configurable: true,
+    //         });
+    //       } catch (err) {
+    //         console.error(`[${NAME}] XHR patch error:`, err);
+    //       }
+    //     }
+    //   });
+    //   return origSend.apply(this, arguments);
+    // };
+    // console.info(`[${NAME}] XHR patched`);
   }
 
   // SPA 네비게이션/DOM 변경 시마다 재스캔

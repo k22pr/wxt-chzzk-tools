@@ -8,16 +8,13 @@ export default defineConfig({
   },
   manifest: {
     name: "치직툴 (chzzk-tools)",
-    permissions: ["storage"],
+    permissions: ["storage", "declarativeNetRequest"],
     host_permissions: ["https://chzzk.naver.com/*"],
     web_accessible_resources: [
       {
         resources: [
           "utility/show.js",
-          "injected/status.js",
           "injected/bypass.js",
-          "injected/auto-quality.js",
-          "injected/live-bar.js",
           "injected/stream-design.css",
           "injected/stream-design.js",
           "injected/stream-design.js",
