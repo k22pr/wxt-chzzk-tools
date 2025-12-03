@@ -49,17 +49,13 @@ const onUpdateColor = (color: string) => {
       },
     }"
   >
-    <!-- <a-watermark
-      :height="30"
-      :width="130"
-      content="Chzzk Tools"
-      :gap="[20, 20]"
-    > -->
-    <div w="full" p="4">
+    <div w="full" pb="4" px="4">
       <div w="full" grid gap="2" flex items="center" py="2" px="4">
         <img src="@/assets/logo.svg" class="logo vue" w="32px" />
-        <div text="20px center" font="medium">Chzzk Tools</div>
-        <div text="xs gray-6" font="mono">v{{ version }}</div>
+        <div flex items="end" gap="2">
+          <div text="20px center" font="medium">Chzzk Tools</div>
+          <div text="xs gray-6" font="mono">v{{ version }}</div>
+        </div>
       </div>
       <div w="full" px="4" v-if="isLoaded">
         <OptionContent @update-color="onUpdateColor" />
