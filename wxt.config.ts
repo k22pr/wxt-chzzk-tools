@@ -14,7 +14,6 @@ export default defineConfig({
       {
         resources: [
           "utility/show.js",
-          "injected/bypass.js",
           "injected/stream-design.css",
           "injected/stream-design.js",
           "injected/stream-design.js",
