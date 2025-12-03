@@ -56,21 +56,10 @@ const onUpdateColor = (color: string) => {
       :gap="[20, 20]"
     > -->
     <div w="full" p="4">
-      <div w="full" flex="col" items="center" mb="6">
-        <div w="full" text="center" flex justify="center">
-          <img
-            src="@/assets/logo.svg"
-            class="logo vue"
-            alt="Vue logo"
-            w="54px"
-            my="4"
-          />
-        </div>
-        <div flex justify="center" items="end" gap="2">
-          <div text="xs gray-6" opacity-0 font="mono">v{{ version }}</div>
-          <div text="20px center" font="medium">Chzzk Tools</div>
-          <div text="xs gray-6" font="mono">v{{ version }}</div>
-        </div>
+      <div w="full" grid gap="2" flex items="center" py="2" px="4">
+        <img src="@/assets/logo.svg" class="logo vue" w="32px" />
+        <div text="20px center" font="medium">Chzzk Tools</div>
+        <div text="xs gray-6" font="mono">v{{ version }}</div>
       </div>
       <div w="full" px="4" v-if="isLoaded">
         <OptionContent @update-color="onUpdateColor" />

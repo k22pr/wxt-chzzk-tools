@@ -51,34 +51,10 @@ watch(
     if (typeof color === "string" && color) emit("update-color", color);
   }
 );
-
-const toggleOption = (
-  option: "useStreamDesign" | "useAutoQuality" | "useLiveBar"
-) => {
-  options[option] = !options[option];
-};
 </script>
 
 <template>
   <div w="full" grid gap="4" pt="3">
-    <!-- <div w="full" grid gap="2">
-      <div w="full" flex items="top" class="flex" justify="between">
-        <div w="full">
-          <div text="4">대표 색상</div>
-        </div>
-        <div flex items="center" gap="2">
-          <button
-            class="color-button"
-            v-for="(color, index) in Object.keys(colorMap)"
-            :key="index"
-            :class="`${color} ${options.themeName === color ? 'active' : ''}`"
-            @click="options.themeName = color"
-            shape="circle"
-            size="small"
-          />
-        </div>
-      </div>
-    </div> -->
     <div w="full" grid gap="2">
       <div w="full" flex items="top" class="flex" justify="between">
         <div w="full">
@@ -108,9 +84,9 @@ const toggleOption = (
     <div w="full" grid gap="2">
       <div w="full" flex items="top" justify="between">
         <div w="full">
-          <div text="4">영상 오버레이 / 음향 보정</div>
+          <div text="4">음향 보정 (Compressor)</div>
           <div text="3 gray-5">
-            볼륨/음질을 세밀하게 조절할 수 있는 오버레이를 표시합니다.
+            볼륨/음질을 조절할 수 있는 오버레이를 표시합니다.
           </div>
         </div>
         <div>
@@ -118,19 +94,6 @@ const toggleOption = (
         </div>
       </div>
     </div>
-    <!-- <div w="full" grid gap="2">
-      <div w="full" flex items="top" justify="between">
-        <div w="full">
-          <div text="4">방송화면 디자인</div>
-          <div text="3 gray-5">
-            방송화면에 집중할 수 있도록 UI를 변경합니다.
-          </div>
-        </div>
-        <div>
-          <a-switch v-model:checked="options.useStreamDesign" />
-        </div>
-      </div>
-    </div> -->
   </div>
 </template>
 
