@@ -169,6 +169,7 @@ export default defineContentScript({
   runAt: "document_start",
   world: "MAIN",
   async main() {
+    return;
     init();
   },
 });

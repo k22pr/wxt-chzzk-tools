@@ -33,9 +33,7 @@ async function setupAutoQuality() {
       requestAnimationFrame(() => requestAnimationFrame(() => r()))
     );
 
-    const hasLive =
-      location.pathname.includes("/live/") ||
-      location.pathname.includes("/video/");
+    const hasLive = location.pathname.includes("/live/");
     const videoEl =
       document.querySelector<HTMLVideoElement>(VIDEO_ELEMENT_NAME);
     const items = [
@@ -43,7 +41,7 @@ async function setupAutoQuality() {
         ...document.querySelectorAll<HTMLLIElement>(QUALITY_ELEMENT_NAME),
       ]),
     ];
-    const target = items.find((li) => /1080p|720p/.test(li.innerText));
+    const target = items.find((li) => /1080p/.test(li.innerText));
     if (!target) return false;
 
     const isNowHighQuality = target.classList.contains(
@@ -245,17 +243,6 @@ export default defineContentScript({
     }
 
     setupPopupRemover();
-
-    const isVideoPage = window.location.pathname.startsWith("/video/");
-
-    if (isVideoPage) {
-      // /video/* 페이지: 3초 딜레이 후 화질 변경 (채팅 다시보기 로딩 충돌 방지)
-      setTimeout(async () => {
-        await setupAutoQuality();
-      }, 2000);
-    } else {
-      // /live/* 페이지: 즉시 실행
-      await setupAutoQuality();
-    }
+    await setupAutoQuality();
   },
 });

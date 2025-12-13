@@ -9,7 +9,11 @@ export default defineConfig({
   manifest: {
     name: "치직툴 (chzzk-tools)",
     permissions: ["storage", "declarativeNetRequest"],
-    host_permissions: ["https://chzzk.naver.com/*"],
+    host_permissions: [
+      "https://chzzk.naver.com/*",
+      "https://api.chzzk.naver.com/*",
+      "https://apis.naver.com/*",
+    ],
     web_accessible_resources: [
       {
         resources: ["injected/global.style.css"],
