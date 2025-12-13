@@ -84,7 +84,7 @@ function patchFetch() {
             headers,
           });
         } else {
-          console.log("live-detail not found");
+          // console.log("live-detail not found");
           return resp;
         }
       } catch (err) {
@@ -94,7 +94,7 @@ function patchFetch() {
     });
   };
 
-  console.info(`[${NAME}] fetch patched`);
+  // console.info(`[${NAME}] fetch patched`);
 }
 
 function patchXHR() {

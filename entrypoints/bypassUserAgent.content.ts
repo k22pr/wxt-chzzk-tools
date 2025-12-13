@@ -1,63 +1,58 @@
 const NAME = "chzzk-tools";
+const spoofedUA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 OPR/65.0.3467.48";
 
-type OverloadOptions = {
-  force?: boolean;
-  configurable?: boolean;
-  writable?: boolean;
-};
-
-function overload(
-  target: any,
-  prop: string,
-  value: any,
-  options?: OverloadOptions
-) {
-  const opts: Required<OverloadOptions> = {
+const overload = <T>(
+  t: T,
+  prop: T extends Navigator ? keyof T | "oscpu" : keyof T,
+  value: unknown,
+  options: { force?: boolean; configurable?: boolean; writable?: boolean } = {
     force: false,
     configurable: false,
     writable: false,
-    ...(options || {}),
-  } as Required<OverloadOptions>;
+  }
+): void => {
+  let target: T = t;
 
   try {
-    let t: any = target;
-    while (t !== null) {
-      const desc = Object.getOwnPropertyDescriptor(t, prop);
-      if (desc && desc.configurable) {
-        const attrs: PropertyDescriptor = {
-          configurable: opts.configurable,
+    while (target !== null) {
+      const descriptor = Object.getOwnPropertyDescriptor(target, prop);
+
+      if (descriptor && descriptor.configurable) {
+        const newAttributes: PropertyDescriptor = {
+          configurable: options.configurable,
           enumerable: true,
         };
-        if (desc.get) {
-          attrs.get = () => value;
+
+        if (descriptor.get) {
+          newAttributes.get = () => value;
         } else {
-          attrs.value = value;
-          attrs.writable = opts.writable;
+          newAttributes.value = value;
+          newAttributes.writable = options.writable;
         }
-        Object.defineProperty(t, prop, attrs);
+
+        Object.defineProperty(target, prop, newAttributes);
       } else if (
-        opts.force &&
-        Object.getPrototypeOf(target) === Object.getPrototypeOf(t)
+        options.force &&
+        Object.getPrototypeOf(t) === Object.getPrototypeOf(target)
       ) {
-        Object.defineProperty(t, prop, {
+        Object.defineProperty(target, prop, {
           value,
-          configurable: opts.configurable,
+          configurable: options.configurable,
           enumerable: true,
-          writable: opts.writable,
+          writable: options.writable,
         });
       }
-      t = Object.getPrototypeOf(t);
-    }
-  } catch (e) {
-    // 무시
-  }
-}
 
+      target = Object.getPrototypeOf(target);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_) {
+    // do nothing
+  }
+};
 function patchNavigator(n: Navigator) {
   if (!n || typeof n !== "object" || !("userAgent" in n)) return;
-
-  const spoofedUA =
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 OPR/65.0.3467.48";
 
   overload(n, "userAgent", spoofedUA, {
     force: true,
@@ -117,3 +112,11 @@ export default defineContentScript({
     }
   },
 });
+
+(() => {
+  overload(navigator, "userAgent", spoofedUA, {
+    force: true,
+    configurable: true,
+    writable: false,
+  });
+})();

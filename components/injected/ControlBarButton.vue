@@ -1,7 +1,5 @@
 <script lang="ts" setup>
 const emit = defineEmits(["click"]);
-
-console.log("hello");
 </script>
 
 <template>

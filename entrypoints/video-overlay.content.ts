@@ -14,7 +14,7 @@ export default defineContentScript({
         useVideoOverlay?: boolean;
       } | null;
 
-      console.log("saved", saved);
+      // console.log("saved", saved);
 
       if (saved && saved.useVideoOverlay === false) {
         return;
