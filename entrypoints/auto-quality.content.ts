@@ -85,14 +85,24 @@ async function setupAutoQuality() {
   });
 
   function tryMount() {
-    const videoElement = document.querySelector(VIDEO_ELEMENT_NAME);
+    const videoElement =
+      document.querySelector<HTMLVideoElement>(VIDEO_ELEMENT_NAME);
+    if (!videoElement) return;
 
-    (videoElement as HTMLVideoElement | null)?.addEventListener(
+    // 비디오가 이미 로드된 경우 즉시 실행
+    if (videoElement.readyState >= 1) {
+      void tick();
+      restartQualityInterval();
+    }
+
+    // 아직 로드되지 않은 경우 이벤트 리스너 등록
+    videoElement.addEventListener(
       "loadedmetadata",
       () => {
         void tick();
         restartQualityInterval();
-      }
+      },
+      { once: true }
     );
   }
 
@@ -219,10 +229,7 @@ function setupPopupRemover() {
 }
 
 export default defineContentScript({
-  matches: [
-    "https://chzzk.naver.com/live/*",
-    "https://chzzk.naver.com/video/*",
-  ],
+  matches: ["https://chzzk.naver.com/live/*"],
   runAt: "document_start",
   async main() {
     try {
@@ -230,14 +237,25 @@ export default defineContentScript({
         useAutoQuality?: boolean;
       } | null;
 
-      if (saved && saved.useAutoQuality === false) {
+      if (saved?.useAutoQuality === false) {
         return;
       }
     } catch {
       // 옵션 로드 실패 시 기본값(사용)으로 진행
     }
 
-    await setupAutoQuality();
     setupPopupRemover();
+
+    const isVideoPage = window.location.pathname.startsWith("/video/");
+
+    if (isVideoPage) {
+      // /video/* 페이지: 3초 딜레이 후 화질 변경 (채팅 다시보기 로딩 충돌 방지)
+      setTimeout(async () => {
+        await setupAutoQuality();
+      }, 2000);
+    } else {
+      // /live/* 페이지: 즉시 실행
+      await setupAutoQuality();
+    }
   },
 });

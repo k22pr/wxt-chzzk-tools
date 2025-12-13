@@ -5,11 +5,12 @@ import { STORAGE_KEY } from "@/constants";
 const emit = defineEmits<{
   (e: "update-color", color: string): void;
 }>();
+
 const DEFAULT_OPTIONS = {
   useAutoQuality: true,
   useLiveBar: true,
   useVideoOverlay: true,
-  useStreamDesign: false,
+  useAutoRefresh: true,
   themeName: "primary",
 };
 
@@ -17,7 +18,7 @@ const options = reactive({
   useAutoQuality: true,
   useLiveBar: true,
   useVideoOverlay: true,
-  useStreamDesign: false,
+  useAutoRefresh: true,
   themeName: "primary",
 });
 
@@ -87,6 +88,19 @@ watch(
         </div>
         <div>
           <a-switch v-model:checked="options.useVideoOverlay" />
+        </div>
+      </div>
+    </div>
+    <div w="full" grid gap="2">
+      <div w="full" flex items="top" justify="between">
+        <div w="full">
+          <div text="4">팔로잉 자동 새로고침</div>
+          <div text="3 gray-5">
+            사이드바의 팔로잉 목록을 주기적으로 새로고침합니다.
+          </div>
+        </div>
+        <div>
+          <a-switch v-model:checked="options.useAutoRefresh" />
         </div>
       </div>
     </div>

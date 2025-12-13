@@ -59,42 +59,41 @@ function patchFetch() {
     const url =
       typeof input === "string" ? input : (input as Request).url || "";
 
+    // live-detail 요청이 아니면 원본 fetch 그대로 반환
+    if (!url.includes("live-detail")) {
+      return _fetch(input as any, init);
+    }
+
+    // live-detail 요청만 수정
     return _fetch(input as any, init).then(async (resp) => {
       try {
-        if (url && url.includes("live-detail")) {
-          console.log("[chzzk-tools] /live-detail 호출", {
-            href: window.location.href,
-            time: new Date().toISOString(),
-          });
-          console.trace("[chzzk-tools] /live-detail call stack");
+        console.log("[chzzk-tools] /live-detail 호출", {
+          href: window.location.href,
+          time: new Date().toISOString(),
+        });
 
-          const clone = resp.clone();
-          const text = await clone.text();
-          let data = JSON.parse(text);
-          data = modifyDataObject(data);
+        const clone = resp.clone();
+        const text = await clone.text();
+        let data = JSON.parse(text);
+        data = modifyDataObject(data);
 
-          const headers = new Headers(resp.headers);
-          if (!headers.has("content-type")) {
-            headers.set("content-type", "application/json;charset=utf-8");
-          }
-
-          return new Response(JSON.stringify(data), {
-            status: resp.status,
-            statusText: resp.statusText,
-            headers,
-          });
-        } else {
-          // console.log("live-detail not found");
-          return resp;
+        const headers = new Headers(resp.headers);
+        if (!headers.has("content-type")) {
+          headers.set("content-type", "application/json;charset=utf-8");
         }
+
+        return new Response(JSON.stringify(data), {
+          status: resp.status,
+          statusText: resp.statusText,
+          headers,
+        });
       } catch (err) {
         console.error(`[${NAME}] fetch patch error:`, err);
+        // 에러 시 원본 응답 반환
+        return resp;
       }
-      return resp;
     });
   };
-
-  // console.info(`[${NAME}] fetch patched`);
 }
 
 function patchXHR() {

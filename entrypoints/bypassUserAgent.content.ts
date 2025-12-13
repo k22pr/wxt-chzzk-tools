@@ -113,10 +113,11 @@ export default defineContentScript({
   },
 });
 
-(() => {
-  overload(navigator, "userAgent", spoofedUA, {
-    force: true,
-    configurable: true,
-    writable: false,
-  });
-})();
+// 임시 비활성화
+// (() => {
+//   overload(navigator, "userAgent", spoofedUA, {
+//     force: true,
+//     configurable: true,
+//     writable: false,
+//   });
+// })();
