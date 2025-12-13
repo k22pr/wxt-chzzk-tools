@@ -371,7 +371,7 @@ function setupSPAWatcher() {
 }
 
 export default defineContentScript({
-  matches: ["https://chzzk.naver.com/*"],
+  matches: ["https://chzzk.naver.com/live/*"],
   runAt: "document_idle",
   async main() {
     try {

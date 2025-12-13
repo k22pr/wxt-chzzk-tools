@@ -2,10 +2,6 @@
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
 
-import colorMap from "@/data/color-map";
-
-// import colorMap from "@/public/injected/color-map.js";
-
 const emit = defineEmits<{
   (e: "update-color", color: string): void;
 }>();

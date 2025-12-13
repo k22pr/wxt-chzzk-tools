@@ -12,15 +12,7 @@ export default defineConfig({
     host_permissions: ["https://chzzk.naver.com/*"],
     web_accessible_resources: [
       {
-        resources: [
-          "utility/show.js",
-          "injected/stream-design.css",
-          "injected/stream-design.js",
-          "injected/stream-design.js",
-          "injected/global.style.css",
-          // "injected/theme.css",
-          // "injected/theme.js",
-        ],
+        resources: ["injected/global.style.css"],
         matches: ["https://chzzk.naver.com/*"],
       },
     ],

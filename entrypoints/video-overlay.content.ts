@@ -5,7 +5,10 @@ import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
 
 export default defineContentScript({
-  matches: ["https://chzzk.naver.com/*"],
+  matches: [
+    "https://chzzk.naver.com/live/*",
+    "https://chzzk.naver.com/video/*",
+  ],
   cssInjectionMode: "ui",
 
   async main(ctx) {
