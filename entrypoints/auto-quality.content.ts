@@ -48,7 +48,7 @@ async function setupAutoQuality() {
       "pzp-ui-setting-pane-item--checked"
     );
 
-    if (hasLive && !isNowHighQuality && !processed) {
+    if (!isNowHighQuality && !processed) {
       pressEnterOnElement(target as unknown as HTMLElement);
       videoEl?.play().catch(() => {});
       processed = true;
@@ -243,6 +243,79 @@ export default defineContentScript({
     }
 
     setupPopupRemover();
-    await setupAutoQuality();
+
+    // "열심히 불러오는 중.." 문구가 사라지면 화질 자동 변경 실행
+    const LOADING_SELECTOR = '[class*="vod_chatting_text__"]';
+
+    const waitForLoadingComplete = () => {
+      let loadingAppeared = false;
+      let executed = false;
+
+      // 비디오 숨기기
+      const hideVideo = () => {
+        const video = document.querySelector<HTMLVideoElement>(
+          "video.webplayer-internal-video"
+        );
+        if (video) video.style.opacity = "0";
+      };
+
+      // 비디오 보이기
+      const showVideo = () => {
+        const video = document.querySelector<HTMLVideoElement>(
+          "video.webplayer-internal-video"
+        );
+        if (video) video.style.opacity = "1";
+      };
+
+      // 초기 비디오 숨기기
+      hideVideo();
+
+      const tryExecute = () => {
+        if (executed) return;
+        executed = true;
+        setupAutoQuality();
+        // 화질 변경 후 비디오 보이기
+        setTimeout(showVideo, 300);
+      };
+
+      const observer = new MutationObserver(() => {
+        // 비디오 계속 숨기기
+        if (!executed) hideVideo();
+
+        const loadingElement = document.querySelector(LOADING_SELECTOR);
+
+        // 로딩 요소가 나타났는지 체크
+        if (loadingElement && !loadingAppeared) {
+          loadingAppeared = true;
+        }
+
+        // 로딩 요소가 나타났다가 사라지면 실행
+        if (loadingAppeared && !loadingElement) {
+          observer.disconnect();
+          tryExecute();
+        }
+      });
+
+      if (document.body) {
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
+      }
+
+      setTimeout(() => {
+        observer.disconnect();
+        tryExecute();
+      }, 2000);
+    };
+
+    // DOM이 준비된 후 실행
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", waitForLoadingComplete, {
+        once: true,
+      });
+    } else {
+      waitForLoadingComplete();
+    }
   },
 });
