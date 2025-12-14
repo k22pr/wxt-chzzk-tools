@@ -244,17 +244,23 @@ export default defineContentScript({
 
     setupPopupRemover();
 
-    // "열심히 불러오는 중.." 문구가 사라지면 화질 자동 변경 실행
+    const isVideoPage = window.location.pathname.startsWith("/video/");
+
+    // /live/* 페이지: 즉시 실행
+    if (!isVideoPage) {
+      await setupAutoQuality();
+      return;
+    }
+
+    // /video/* 페이지: "열심히 불러오는 중.." 문구가 사라지면 화질 자동 변경 실행
     const LOADING_SELECTOR = '[class*="vod_chatting_text__"]';
 
     const waitForLoadingComplete = () => {
       let loadingAppeared = false;
       let executed = false;
-      const isVideoPage = window.location.pathname.startsWith("/video/");
 
-      // 비디오 숨기기 (/video/* 페이지에서만)
+      // 비디오 숨기기
       const hideVideo = () => {
-        if (!isVideoPage) return;
         const video = document.querySelector<HTMLVideoElement>(
           "video.webplayer-internal-video"
         );
@@ -263,7 +269,6 @@ export default defineContentScript({
 
       // 비디오 보이기
       const showVideo = () => {
-        if (!isVideoPage) return;
         const video = document.querySelector<HTMLVideoElement>(
           "video.webplayer-internal-video"
         );

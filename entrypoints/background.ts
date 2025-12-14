@@ -113,6 +113,43 @@ export default defineBackground(() => {
     }
   };
 
+  // 아이콘 업데이트 함수
+  const updateIcon = (tabId: number, url: string | undefined) => {
+    const isChzzk = url?.startsWith("https://chzzk.naver.com/");
+
+    browser.action.setIcon({
+      tabId,
+      path: isChzzk
+        ? {
+            16: "/icon/icon-16.png",
+            48: "/icon/icon-48.png",
+            128: "/icon/icon-128.png",
+          }
+        : {
+            16: "/icon/icon-16-gray.png",
+            48: "/icon/icon-48-gray.png",
+            128: "/icon/icon-128-gray.png",
+          },
+    });
+  };
+
+  // 탭 업데이트 시 아이콘 변경
+  browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === "complete" && tab.url) {
+      updateIcon(tabId, tab.url);
+    }
+  });
+
+  // 탭 활성화 시 아이콘 변경
+  browser.tabs.onActivated.addListener(async (activeInfo) => {
+    try {
+      const tab = await browser.tabs.get(activeInfo.tabId);
+      updateIcon(activeInfo.tabId, tab.url);
+    } catch {
+      // 탭 정보 가져오기 실패 시 무시
+    }
+  });
+
   // 확장 프로그램 시작 시 규칙 등록
   setupUserAgentRule();
 });
