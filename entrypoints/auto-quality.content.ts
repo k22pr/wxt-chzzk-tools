@@ -250,9 +250,11 @@ export default defineContentScript({
     const waitForLoadingComplete = () => {
       let loadingAppeared = false;
       let executed = false;
+      const isVideoPage = window.location.pathname.startsWith("/video/");
 
-      // 비디오 숨기기
+      // 비디오 숨기기 (/video/* 페이지에서만)
       const hideVideo = () => {
+        if (!isVideoPage) return;
         const video = document.querySelector<HTMLVideoElement>(
           "video.webplayer-internal-video"
         );
@@ -261,6 +263,7 @@ export default defineContentScript({
 
       // 비디오 보이기
       const showVideo = () => {
+        if (!isVideoPage) return;
         const video = document.querySelector<HTMLVideoElement>(
           "video.webplayer-internal-video"
         );
