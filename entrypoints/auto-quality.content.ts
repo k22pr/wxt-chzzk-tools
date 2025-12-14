@@ -242,8 +242,6 @@ export default defineContentScript({
       // 옵션 로드 실패 시 기본값(사용)으로 진행
     }
 
-    setupPopupRemover();
-
     const isVideoPage = window.location.pathname.startsWith("/video/");
 
     // /live/* 페이지: 즉시 실행
@@ -310,6 +308,11 @@ export default defineContentScript({
           subtree: true,
         });
       }
+
+      setupPopupRemover();
+      setTimeout(() => {
+        setupPopupRemover();
+      }, 0);
 
       setTimeout(() => {
         observer.disconnect();
