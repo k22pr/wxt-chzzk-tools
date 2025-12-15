@@ -22,20 +22,35 @@ const options = reactive({
   themeName: "primary",
 });
 
+// 기본값과 동일한지 확인하는 헬퍼 함수
+const isEqualToDefault = (val: typeof options) => {
+  return Object.keys(DEFAULT_OPTIONS).every(
+    (key) =>
+      val[key as keyof typeof DEFAULT_OPTIONS] ===
+      DEFAULT_OPTIONS[key as keyof typeof DEFAULT_OPTIONS]
+  );
+};
+
 onMounted(async () => {
   const saved = await storage.getItem(`local:${STORAGE_KEY}`);
   Object.assign(options, { ...DEFAULT_OPTIONS, ...(saved ?? {}) });
 
-  if (!saved) {
-    storage.setItem(`local:${STORAGE_KEY}`, options);
+  // 저장된 값이 기본값과 동일하면 삭제
+  if (saved && isEqualToDefault(options)) {
+    await storage.removeItem(`local:${STORAGE_KEY}`);
   }
 });
 
 watch(
   options,
-  (val) => {
+  async (val) => {
     try {
-      storage.setItem(`local:${STORAGE_KEY}`, val);
+      // 기본값과 동일하면 저장하지 않고 삭제
+      if (isEqualToDefault(val)) {
+        await storage.removeItem(`local:${STORAGE_KEY}`);
+      } else {
+        await storage.setItem(`local:${STORAGE_KEY}`, val);
+      }
     } catch (e) {}
   },
   { deep: true }

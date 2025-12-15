@@ -37,10 +37,10 @@ async function loadOptionsAndStart() {
       useAutoRefresh?: boolean;
     } | null;
 
-    if (saved?.useAutoRefresh) {
-      startAutoRefresh();
-    } else {
+    if (saved?.useAutoRefresh === false) {
       stopAutoRefresh();
+    } else {
+      startAutoRefresh();
     }
   } catch {
     stopAutoRefresh();
@@ -59,10 +59,10 @@ export default defineContentScript({
       const change = changes[localKey] || changes[STORAGE_KEY];
       if (change) {
         const newVal = change.newValue ?? {};
-        if (newVal.useAutoRefresh) {
-          startAutoRefresh();
-        } else {
+        if (newVal.useAutoRefresh === false) {
           stopAutoRefresh();
+        } else {
+          startAutoRefresh();
         }
       }
     });

@@ -227,7 +227,10 @@ function setupPopupRemover() {
 }
 
 export default defineContentScript({
-  matches: ["https://chzzk.naver.com/live/*"],
+  matches: [
+    "https://chzzk.naver.com/live/*",
+    "https://chzzk.naver.com/video/*",
+  ],
   runAt: "document_start",
   async main() {
     try {
@@ -247,6 +250,7 @@ export default defineContentScript({
     // /live/* 페이지: 즉시 실행
     if (!isVideoPage) {
       await setupAutoQuality();
+      setupPopupRemover();
       return;
     }
 
