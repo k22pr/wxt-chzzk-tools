@@ -62,7 +62,7 @@ export default defineContentScript({
     const STORAGE_KEY_PREFIX = "chzzk-tools-comp:";
     const STORAGE_VERSION = 1;
     // 기본 유효기간: 30일 (ms)
-    const STORAGE_TTL_MS = 1000 * 60 * 60 * 24 * 30;
+    const STORAGE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
     function getChannelIdFromLocation(): string | null {
       try {
