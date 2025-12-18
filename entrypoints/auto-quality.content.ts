@@ -227,10 +227,7 @@ function setupPopupRemover() {
 }
 
 export default defineContentScript({
-  matches: [
-    "https://chzzk.naver.com/live/*",
-    "https://chzzk.naver.com/video/*",
-  ],
+  matches: ["https://chzzk.naver.com/*"],
   runAt: "document_start",
   async main() {
     try {

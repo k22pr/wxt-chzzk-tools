@@ -22,7 +22,7 @@ declare global {
 }
 
 export default defineContentScript({
-  matches: ["https://chzzk.naver.com/live/*"],
+  matches: ["https://chzzk.naver.com/*"],
   cssInjectionMode: "ui",
 
   async main(ctx) {
