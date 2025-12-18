@@ -34,23 +34,13 @@ const isEqualToDefault = (val: typeof options) => {
 onMounted(async () => {
   const saved = await storage.getItem(`local:${STORAGE_KEY}`);
   Object.assign(options, { ...DEFAULT_OPTIONS, ...(saved ?? {}) });
-
-  // 저장된 값이 기본값과 동일하면 삭제
-  if (saved && isEqualToDefault(options)) {
-    await storage.removeItem(`local:${STORAGE_KEY}`);
-  }
 });
 
 watch(
   options,
   async (val) => {
     try {
-      // 기본값과 동일하면 저장하지 않고 삭제
-      if (isEqualToDefault(val)) {
-        await storage.removeItem(`local:${STORAGE_KEY}`);
-      } else {
-        await storage.setItem(`local:${STORAGE_KEY}`, val);
-      }
+      await storage.setItem(`local:${STORAGE_KEY}`, val);
     } catch (e) {}
   },
   { deep: true }

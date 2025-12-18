@@ -1,6 +1,6 @@
 // Windows User-Agent (Opera 브라우저로 위장)
 const SPOOFED_USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.6856.96 Safari/537.36 OPR/114.0.5303.133";
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 OPR/124.0.0.0";
 
 // declarativeNetRequest 규칙 ID
 const RULE_ID = 1;
