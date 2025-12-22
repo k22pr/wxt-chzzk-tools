@@ -114,23 +114,37 @@ export default defineBackground(() => {
   };
 
   // 아이콘 업데이트 함수
-  const updateIcon = (tabId: number, url: string | undefined) => {
-    const isChzzk = url?.startsWith("https://chzzk.naver.com/");
+  const updateIcon = async (tabId: number, url: string | undefined) => {
+    // chrome://, edge://, about: 등의 시스템 페이지에서는 아이콘 설정 불가
+    if (
+      !url ||
+      url.startsWith("chrome://") ||
+      url.startsWith("edge://") ||
+      url.startsWith("about:")
+    ) {
+      return;
+    }
 
-    browser.action.setIcon({
-      tabId,
-      path: isChzzk
-        ? {
-            16: "/icon/16.png",
-            48: "/icon/48.png",
-            128: "/icon/128.png",
-          }
-        : {
-            16: "/icon/icon-16-gray.png",
-            48: "/icon/icon-48-gray.png",
-            128: "/icon/icon-128-gray.png",
-          },
-    });
+    const isChzzk = url.startsWith("https://chzzk.naver.com/");
+
+    try {
+      await browser.action.setIcon({
+        tabId,
+        path: isChzzk
+          ? {
+              16: "/icon/16.png",
+              48: "/icon/48.png",
+              128: "/icon/128.png",
+            }
+          : {
+              16: "/icon/icon-16-gray.png",
+              48: "/icon/icon-48-gray.png",
+              128: "/icon/icon-128-gray.png",
+            },
+      });
+    } catch {
+      // 아이콘 설정 실패 시 무시 (제한된 페이지에서 발생 가능)
+    }
   };
 
   // 탭 업데이트 시 아이콘 변경

@@ -57,7 +57,7 @@ const onUpdateColor = (color: string) => {
           <div text="xs gray-6" font="mono">v{{ version }}</div>
         </div>
       </div>
-      <div w="full" px="4" v-if="isLoaded">
+      <div w="full" px="4" mt="8" v-if="isLoaded">
         <OptionContent @update-color="onUpdateColor" />
       </div>
     </div>

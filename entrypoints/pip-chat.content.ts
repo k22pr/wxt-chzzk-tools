@@ -2,6 +2,7 @@ import { createApp } from "vue";
 import PipButton from "@/components/injected/PipButton.vue";
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
+import { observeElement } from "@/utils/content-helpers";
 
 // Document Picture-in-Picture API 타입 정의
 interface DocumentPictureInPictureOptions {
@@ -444,38 +445,10 @@ export default defineContentScript({
       app.mount(container);
     }
 
-    // DOM 감시
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
-          if (node instanceof Element) {
-            if (node.matches(CONTROL_BAR_RIGHT_SELECTOR)) {
-              mountButton(node);
-            } else if (node.querySelector(CONTROL_BAR_RIGHT_SELECTOR)) {
-              node
-                .querySelectorAll(CONTROL_BAR_RIGHT_SELECTOR)
-                .forEach(mountButton);
-            }
-          }
-        }
-      }
+    // 컨트롤 바 감지 및 마운트
+    observeElement({
+      selector: CONTROL_BAR_RIGHT_SELECTOR,
+      onElementAdded: (el) => mountButton(el),
     });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // 초기 실행 (재시도 포함)
-    const tryMount = () => {
-      const bars = document.querySelectorAll(CONTROL_BAR_RIGHT_SELECTOR);
-      console.log(`[Chzzk Tools] 컨트롤 바 찾기 시도: ${bars.length}개 발견`);
-      bars.forEach(mountButton);
-    };
-
-    // 즉시 시도
-    tryMount();
-
-    // 1초 후 재시도 (페이지 로드 후 DOM이 늦게 생성되는 경우 대비)
-    setTimeout(tryMount, 1000);
-    // 3초 후 추가 재시도
-    setTimeout(tryMount, 3000);
   },
 });

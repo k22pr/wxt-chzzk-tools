@@ -1,5 +1,11 @@
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
+import {
+  startUrlWatcher,
+  observeElement,
+  onDOMReady,
+  isVideoPage,
+} from "@/utils/content-helpers";
 
 const VIDEO_ELEMENT_NAME = "video.webplayer-internal-video";
 const QUALITY_ELEMENT_NAME = "li.pzp-ui-setting-quality-item";
@@ -24,16 +30,17 @@ function pressEnterOnElement(el: HTMLElement | null | undefined) {
   );
 }
 
+// setupAutoQuality returns a cleanup function
 async function setupAutoQuality() {
   let qualityInterval: number | null = null;
   let processed = false;
+  let observer: MutationObserver | null = null;
 
   async function tick() {
     await new Promise<void>((r) =>
       requestAnimationFrame(() => requestAnimationFrame(() => r()))
     );
 
-    const hasLive = location.pathname.includes("/live/");
     const videoEl =
       document.querySelector<HTMLVideoElement>(VIDEO_ELEMENT_NAME);
     const items = [
@@ -78,9 +85,10 @@ async function setupAutoQuality() {
     window.setTimeout(stopQualityInterval, 3000);
   }
 
-  window.addEventListener("keydown", (e) => {
+  const onKeydown = (e: KeyboardEvent) => {
     if (e.altKey && e.key.toLowerCase() === "h") pressEnterOnElement(null);
-  });
+  };
+  window.addEventListener("keydown", onKeydown);
 
   function tryMount() {
     const videoElement =
@@ -104,45 +112,21 @@ async function setupAutoQuality() {
     );
   }
 
-  (function patchHistoryForSPA() {
-    const fireLoc = () => window.setTimeout(restartQualityInterval, 0);
-    const _ps = history.pushState;
-    const _rs = history.replaceState;
-    history.pushState = function (...args: any[]) {
-      const r = _ps.apply(this, args as any);
-      fireLoc();
-      return r;
-    };
-    history.replaceState = function (...args: any[]) {
-      const r = _rs.apply(this, args as any);
-      fireLoc();
-      return r;
-    };
-    window.addEventListener("popstate", fireLoc);
-  })();
+  onDOMReady(tryMount);
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", tryMount, { once: true });
-  } else {
-    tryMount();
-  }
+  const cleanupObserver = observeElement({
+    selector: VIDEO_ELEMENT_NAME,
+    onElementAdded: () => tryMount(),
+  });
 
-  new MutationObserver((list) => {
-    for (const m of list) {
-      for (const n of m.addedNodes) {
-        if (n.nodeType !== 1) continue;
-        const el = n as Element;
-        if (
-          el.matches?.(VIDEO_ELEMENT_NAME) ||
-          el.querySelector?.(VIDEO_ELEMENT_NAME)
-        ) {
-          tryMount();
-        }
-      }
-    }
-  }).observe(document.documentElement, { childList: true, subtree: true });
+  return () => {
+    stopQualityInterval();
+    window.removeEventListener("keydown", onKeydown);
+    cleanupObserver();
+  };
 }
 
+// setupPopupRemover returns a cleanup function
 function setupPopupRemover() {
   const MSG = "광고 차단 프로그램을 사용 중이신가요?";
 
@@ -208,22 +192,9 @@ function setupPopupRemover() {
     characterData: true,
   });
 
-  (function patchHistoryForSPA() {
-    const fireLoc = () => window.setTimeout(() => scan(document), 0);
-    const _ps = history.pushState;
-    const _rs = history.replaceState;
-    history.pushState = function (...args: any[]) {
-      const r = _ps.apply(this, args as any);
-      fireLoc();
-      return r;
-    };
-    history.replaceState = function (...args: any[]) {
-      const r = _rs.apply(this, args as any);
-      fireLoc();
-      return r;
-    };
-    window.addEventListener("popstate", fireLoc);
-  })();
+  return () => {
+    mo.disconnect();
+  };
 }
 
 export default defineContentScript({
@@ -242,92 +213,90 @@ export default defineContentScript({
       // 옵션 로드 실패 시 기본값(사용)으로 진행
     }
 
-    const isVideoPage = window.location.pathname.startsWith("/video/");
+    // 현재 정리 함수들
+    let cleanup: (() => void) | null = null;
 
-    // /live/* 페이지: 즉시 실행
-    if (!isVideoPage) {
-      await setupAutoQuality();
-      setupPopupRemover();
-      return;
-    }
+    // URL 변경 시 실행되는 콜백
+    const handlePathChange = async () => {
+      // 이전 상태 정리
+      if (cleanup) {
+        cleanup();
+        cleanup = null;
+      }
 
-    // /video/* 페이지: "열심히 불러오는 중.." 문구가 사라지면 화질 자동 변경 실행
-    const LOADING_SELECTOR = '[class*="vod_chatting_text__"]';
+      // 팝업 제거는 항상 실행 (페이지마다 재설정)
+      const cleanPopup = setupPopupRemover() || (() => {});
 
-    const waitForLoadingComplete = () => {
-      let loadingAppeared = false;
+      if (!isVideoPage()) {
+        // /live/* 페이지 등: 기본 실행
+        const cleanQuality = (await setupAutoQuality()) || (() => {});
+        cleanup = () => {
+          cleanQuality();
+          cleanPopup();
+        };
+        return;
+      }
+
+      // /video/* 페이지: "열심히 불러오는 중.." 문구가 사라지면 화질 자동 변경 실행
+      const LOADING_SELECTOR = '[class*="vod_chatting_text__"]';
+      let observer: MutationObserver | null = null;
       let executed = false;
+      let loadingAppeared = false;
+      let cleanQuality: (() => void) | null = null;
 
-      // 비디오 숨기기
+      // 비디오 숨기기/보이기
       const hideVideo = () => {
-        const video = document.querySelector<HTMLVideoElement>(
-          "video.webplayer-internal-video"
-        );
+        const video =
+          document.querySelector<HTMLVideoElement>(VIDEO_ELEMENT_NAME);
         if (video) video.style.opacity = "0";
       };
-
-      // 비디오 보이기
       const showVideo = () => {
-        const video = document.querySelector<HTMLVideoElement>(
-          "video.webplayer-internal-video"
-        );
+        const video =
+          document.querySelector<HTMLVideoElement>(VIDEO_ELEMENT_NAME);
         if (video) video.style.opacity = "1";
       };
 
-      // 초기 비디오 숨기기
-      hideVideo();
-
-      const tryExecute = () => {
+      const tryExecute = async () => {
         if (executed) return;
         executed = true;
-        setupAutoQuality();
-        // 화질 변경 후 비디오 보이기
+        cleanQuality = (await setupAutoQuality()) || (() => {});
         setTimeout(showVideo, 300);
       };
 
-      const observer = new MutationObserver(() => {
-        // 비디오 계속 숨기기
+      hideVideo();
+
+      observer = new MutationObserver(() => {
         if (!executed) hideVideo();
-
         const loadingElement = document.querySelector(LOADING_SELECTOR);
-
-        // 로딩 요소가 나타났는지 체크
-        if (loadingElement && !loadingAppeared) {
-          loadingAppeared = true;
-        }
-
-        // 로딩 요소가 나타났다가 사라지면 실행
+        if (loadingElement && !loadingAppeared) loadingAppeared = true;
         if (loadingAppeared && !loadingElement) {
-          observer.disconnect();
+          observer?.disconnect();
           tryExecute();
         }
       });
 
       if (document.body) {
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true,
-        });
+        observer.observe(document.body, { childList: true, subtree: true });
       }
 
-      setupPopupRemover();
-      setTimeout(() => {
-        setupPopupRemover();
-      }, 0);
-
-      setTimeout(() => {
-        observer.disconnect();
+      const timeoutId = setTimeout(() => {
+        observer?.disconnect();
         tryExecute();
       }, 2000);
+
+      cleanup = () => {
+        observer?.disconnect();
+        clearTimeout(timeoutId);
+        showVideo();
+        cleanPopup();
+        if (cleanQuality) cleanQuality();
+      };
     };
 
-    // DOM이 준비된 후 실행
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", waitForLoadingComplete, {
-        once: true,
-      });
-    } else {
-      waitForLoadingComplete();
-    }
+    // URL 워처 시작 (공통 유틸리티 사용)
+    startUrlWatcher({
+      onPathChange: handlePathChange,
+      interval: 500,
+    });
   },
 });

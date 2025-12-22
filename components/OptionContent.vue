@@ -11,6 +11,7 @@ const DEFAULT_OPTIONS = {
   useLiveBar: true,
   useVideoOverlay: true,
   useAutoRefresh: true,
+  useVideoTime: true,
   themeName: "primary",
 };
 
@@ -19,6 +20,7 @@ const options = reactive({
   useLiveBar: true,
   useVideoOverlay: true,
   useAutoRefresh: true,
+  useVideoTime: true,
   themeName: "primary",
 });
 
@@ -101,11 +103,22 @@ watch(
         <div w="full">
           <div text="4">팔로잉 자동 새로고침</div>
           <div text="3 gray-5">
-            사이드바의 팔로잉 목록을 주기적으로 새로고침합니다.
+            사이드바의 팔로잉 목록을 30초마다 새로고침합니다.
           </div>
         </div>
         <div>
           <a-switch v-model:checked="options.useAutoRefresh" />
+        </div>
+      </div>
+    </div>
+    <div w="full" grid gap="2">
+      <div w="full" flex items="top" justify="between">
+        <div w="full">
+          <div text="4">VOD 실제 시간</div>
+          <div text="3 gray-5">VOD 탐색 시 실제 방송 시간을 표시합니다.</div>
+        </div>
+        <div>
+          <a-switch v-model:checked="options.useVideoTime" />
         </div>
       </div>
     </div>

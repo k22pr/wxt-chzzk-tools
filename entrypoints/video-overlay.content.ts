@@ -3,6 +3,7 @@ import VideoOverlay from "@/components/injected/VideoOverlay.vue";
 import ControlBarButton from "@/components/injected/ControlBarButton.vue";
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
+import { observeElement } from "@/utils/content-helpers";
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
@@ -399,36 +400,16 @@ export default defineContentScript({
       app.mount(container);
     }
 
-    // 초기 로드 및 감지
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        // 노드가 추가되었을 때 확인
-        for (const node of mutation.addedNodes) {
-          if (node instanceof Element) {
-            // 비디오 요소인지 확인
-            if (node.matches(VIDEO_SELECTOR)) {
-              mountUi(node);
-            } else if (node.querySelector(VIDEO_SELECTOR)) {
-              node.querySelectorAll(VIDEO_SELECTOR).forEach(mountUi);
-            }
-
-            // 컨트롤 바 요소인지 확인
-            if (node.matches(CONTROL_BAR_LEFT_SELECTOR)) {
-              mountButton(node);
-            } else if (node.querySelector(CONTROL_BAR_LEFT_SELECTOR)) {
-              node
-                .querySelectorAll(CONTROL_BAR_LEFT_SELECTOR)
-                .forEach(mountButton);
-            }
-          }
-        }
-      }
+    // 비디오 요소 감지 및 마운트
+    observeElement({
+      selector: VIDEO_SELECTOR,
+      onElementAdded: (el) => mountUi(el),
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // 초기 실행 (이미 로드된 요소들 처리)
-    document.querySelectorAll(VIDEO_SELECTOR).forEach(mountUi);
-    document.querySelectorAll(CONTROL_BAR_LEFT_SELECTOR).forEach(mountButton);
+    // 컨트롤 바 감지 및 마운트
+    observeElement({
+      selector: CONTROL_BAR_LEFT_SELECTOR,
+      onElementAdded: (el) => mountButton(el),
+    });
   },
 });

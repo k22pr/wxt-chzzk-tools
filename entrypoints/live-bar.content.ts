@@ -1,5 +1,11 @@
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
+import {
+  startUrlWatcher,
+  observeElement,
+  onDOMReady,
+  isLivePage,
+} from "@/utils/content-helpers";
 
 const VIDEO_LAYOUT_NAME = "div#live_player_layout";
 const VIDEO_ELEMENT_NAME = "video.webplayer-internal-video";
@@ -317,8 +323,7 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
 }
 
 function tryMountAll() {
-  const hasLive = location.pathname.includes("/live/");
-  if (!hasLive) return;
+  if (!isLivePage()) return;
   document
     .querySelectorAll<HTMLVideoElement>(VIDEO_ELEMENT_NAME)
     .forEach((v) => {
@@ -327,47 +332,26 @@ function tryMountAll() {
     });
 }
 
-function setupSPAWatcher() {
-  (function () {
-    const fireLoc = () => window.setTimeout(tryMountAll, 0);
-    const _ps = history.pushState;
-    const _rs = history.replaceState;
-    history.pushState = function (...args: any[]) {
-      const r = _ps.apply(this, args as any);
-      fireLoc();
-      return r;
-    };
-    history.replaceState = function (...args: any[]) {
-      const r = _rs.apply(this, args as any);
-      fireLoc();
-      return r;
-    };
-    window.addEventListener("popstate", fireLoc);
-  })();
+function setupLiveBarObserver() {
+  onDOMReady(tryMountAll);
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", tryMountAll, { once: true });
-  } else {
-    tryMountAll();
-  }
+  // 비디오 요소 추가 감지
+  observeElement({
+    selector: VIDEO_ELEMENT_NAME,
+    onElementAdded: () => tryMountAll(),
+  });
 
-  new MutationObserver((list) => {
-    for (const m of list) {
-      for (const n of m.addedNodes) {
-        if (n.nodeType !== 1) continue;
-        const el = n as Element;
-        if (
-          el.matches?.(VIDEO_ELEMENT_NAME) ||
-          el.querySelector?.(VIDEO_ELEMENT_NAME)
-        ) {
-          tryMountAll();
-        }
-        if (el.matches?.(BOTTOM_SEL) || el.querySelector?.(BOTTOM_SEL)) {
-          tryMountAll();
-        }
-      }
-    }
-  }).observe(document.documentElement, { childList: true, subtree: true });
+  // 컨트롤 바 추가 감지
+  observeElement({
+    selector: BOTTOM_SEL,
+    onElementAdded: () => tryMountAll(),
+  });
+
+  // URL 변경 감지
+  startUrlWatcher({
+    onPathChange: () => tryMountAll(),
+    interval: 500,
+  });
 }
 
 export default defineContentScript({
@@ -386,6 +370,6 @@ export default defineContentScript({
       // 옵션 로드 실패 시 기본값(사용)으로 진행
     }
 
-    setupSPAWatcher();
+    setupLiveBarObserver();
   },
 });
