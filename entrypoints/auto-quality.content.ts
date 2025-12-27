@@ -298,5 +298,8 @@ export default defineContentScript({
       onPathChange: handlePathChange,
       interval: 500,
     });
+
+    // 초기 실행
+    handlePathChange();
   },
 });
