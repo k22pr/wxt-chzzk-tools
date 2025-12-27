@@ -87,3 +87,12 @@
   transform: translate(-50%, -50%);
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
 }
+
+body [class*="home_list_container__"] {
+  margin-top: 0px !important;
+  margin-bottom: 30px !important;
+}
+
+body [class*="home_list_container__"]:has(#home_banner) {
+  display: none !important;
+}

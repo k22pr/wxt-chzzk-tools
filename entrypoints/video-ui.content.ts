@@ -9,7 +9,6 @@ import { STORAGE_KEY } from "@/constants";
 const NAME = "[chzzk-tools][video-ui]";
 
 const CSS = `
-  /* PIP 모드가 아닐 때만 적용 - #live_player_layout 또는 #player_layout에 pip_mode 클래스가 붙음 */
   #live_player_layout:not(.pip_mode) .pzp-pc .pzp-pc__bottom,
   #player_layout:not(.pip_mode) .pzp-pc .pzp-pc__bottom {
     transition: background 0.3s, backdrop-filter 0.3s, width 0.3s;

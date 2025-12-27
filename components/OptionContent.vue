@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
+import FunctionContent from "@/components/FunctionContent.vue";
+import DesignContent from "@/components/DesignContent.vue";
 
 const emit = defineEmits<{
   (e: "update-color", color: string): void;
@@ -13,6 +15,8 @@ const DEFAULT_OPTIONS = {
   useAutoRefresh: true,
   useVideoTime: true,
   useVideoUI: true,
+  useHideBanner: true,
+  useHideRecommend: true,
   themeName: "primary",
 };
 
@@ -23,19 +27,12 @@ const options = reactive({
   useAutoRefresh: true,
   useVideoTime: true,
   useVideoUI: true,
+  useHideBanner: true,
+  useHideRecommend: true,
   themeName: "primary",
 });
 
 const activeKey = ref("1");
-
-// 기본값과 동일한지 확인하는 헬퍼 함수
-const isEqualToDefault = (val: typeof options) => {
-  return Object.keys(DEFAULT_OPTIONS).every(
-    (key) =>
-      val[key as keyof typeof DEFAULT_OPTIONS] ===
-      DEFAULT_OPTIONS[key as keyof typeof DEFAULT_OPTIONS]
-  );
-};
 
 onMounted(async () => {
   const saved = await storage.getItem(`local:${STORAGE_KEY}`);
@@ -59,104 +56,27 @@ watch(
     if (typeof color === "string" && color) emit("update-color", color);
   }
 );
+
+// 자식 컴포넌트에서 옵션 업데이트 시
+const updateOptions = (newOptions: Partial<typeof options>) => {
+  Object.assign(options, newOptions);
+};
 </script>
 
 <template>
   <div w="full">
     <a-tabs v-model:activeKey="activeKey">
       <a-tab-pane key="1" tab="기능">
-        <div w="full" grid gap="4" mt="4">
-          <div w="full" grid gap="2">
-            <div w="full" flex items="top" class="flex" justify="between">
-              <div w="full">
-                <div text="4">자동 화질변경</div>
-                <div text="3 gray-5">
-                  광고 차단시 화질이 낮아지는 문제를 해결합니다.
-                </div>
-              </div>
-              <div>
-                <a-switch v-model:checked="options.useAutoQuality" />
-              </div>
-            </div>
-          </div>
-          <div w="full" grid gap="2">
-            <div w="full" flex items="top" justify="between">
-              <div w="full">
-                <div text="4">LIVE 재생바</div>
-                <div text="3 gray-5">
-                  방송 접속시점부터 최대 1분30초간 재생바를 제공합니다.
-                </div>
-              </div>
-              <div>
-                <a-switch v-model:checked="options.useLiveBar" />
-              </div>
-            </div>
-          </div>
-          <div w="full" grid gap="2">
-            <div w="full" flex items="top" justify="between">
-              <div w="full">
-                <div text="4">음향 보정 (Compressor)</div>
-                <div text="3 gray-5">
-                  볼륨/음질을 조절할 수 있는 오버레이를 표시합니다.
-                </div>
-              </div>
-              <div>
-                <a-switch v-model:checked="options.useVideoOverlay" />
-              </div>
-            </div>
-          </div>
-          <div w="full" grid gap="2">
-            <div w="full" flex items="top" justify="between">
-              <div w="full">
-                <div text="4">팔로잉 자동 새로고침</div>
-                <div text="3 gray-5">
-                  사이드바의 팔로잉 목록을 30초마다 새로고침합니다.
-                </div>
-              </div>
-              <div>
-                <a-switch v-model:checked="options.useAutoRefresh" />
-              </div>
-            </div>
-          </div>
-          <div w="full" grid gap="2">
-            <div w="full" flex items="top" justify="between">
-              <div w="full">
-                <div text="4">VOD 실제 시간</div>
-                <div text="3 gray-5">
-                  VOD 탐색 시 실제 방송 시간을 표시합니다.
-                </div>
-              </div>
-              <div>
-                <a-switch v-model:checked="options.useVideoTime" />
-              </div>
-            </div>
-          </div>
-        </div>
+        <FunctionContent :options="options" @update:options="updateOptions" />
       </a-tab-pane>
       <a-tab-pane key="2" tab="모양">
-        <div w="full" grid gap="4" mt="4">
-          <div w="full" grid gap="2">
-            <div w="full" flex items="top" justify="between">
-              <div w="full">
-                <div text="4">동영상 재생바 스타일 변경</div>
-                <div text="3 gray-5">동영상 재생바에 디자인을 적용합니다.</div>
-              </div>
-              <div>
-                <a-switch v-model:checked="options.useVideoUI" />
-              </div>
-            </div>
-          </div>
-        </div>
+        <DesignContent :options="options" @update:options="updateOptions" />
       </a-tab-pane>
     </a-tabs>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.read-the-docs {
-  color: #888;
-}
-
 .color-button {
   width: 16px;
   height: 16px;
