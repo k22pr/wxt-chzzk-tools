@@ -25,9 +25,9 @@ const CSS = `
       .live-bar-box .slide-box:hover{height:6px;}
       .live-bar-box .slide-box div{transition:width 0.1s, height 0.2s;}
       .live-bar-box .slide-box .track{position:absolute;left:0px;width:100%;height:2px;border-radius:3px;background:rgba(255,255,255,0.5);}
-      .live-bar-box .slide-box .rng{position:absolute;left:0px;height:2px;border-radius:3px;background:var(--chzzk-tools-primary-02);}
+      .live-bar-box .slide-box .rng{position:absolute;left:0px;height:2px;border-radius:3px;background:#00f889;}
       .live-bar-box .slide-box:hover .track{height:6px;border-radius:3px;box-shadow:0px 0px 4px rgba(0,0,0,0.3);}
-      .live-bar-box .slide-box:hover .rng{height:6px;border-radius:3px;box-shadow:0px 0px 5px var(--chzzk-tools-primary-02);}
+      .live-bar-box .slide-box:hover .rng{height:6px;border-radius:3px;box-shadow:0px 0px 5px #00f889;}
       .live-bar-box.no-anim .slide-box .rng { transition: none !important; }
 
       .live-bar-box .hover-tip{
