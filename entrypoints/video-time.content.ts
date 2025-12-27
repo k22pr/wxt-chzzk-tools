@@ -12,8 +12,10 @@ import {
 } from "@/utils/content-helpers";
 
 const NAME = "[chzzk-tools][video-time]";
-const SEEKING_PREVIEW_TIME_SELECTOR = "div.pzp-seeking-preview__time";
+const SEEKING_PREVIEW_TIME_SELECTOR = "[class*='pzp-seeking-preview__time']";
+const VOD_TIME_SELECTOR = "[class*='pzp-pc__vod-time']";
 const REAL_TIME_CLASS = "chzzk-tools-real-time";
+const REAL_PLAYBACK_TIME_CLASS = "chzzk-tools-real-playback-time";
 
 // liveOpenDate 캐시 (videoId -> Date)
 let cachedLiveOpenDate: Date | null = null;
@@ -130,6 +132,71 @@ function updateRealTimeElement(
   realTimeEl.textContent = realTimeStr;
 }
 
+// 재생 시간(컨트롤바) 실제 시간 툴팁 업데이트
+function updateRealPlaybackTimeElement(
+  vodTimeEl: Element,
+  liveOpenDate: Date,
+  playbackTimeStr: string
+) {
+  const playbackSeconds = parseTimeString(playbackTimeStr);
+  const realTime = new Date(liveOpenDate.getTime() + playbackSeconds * 1000);
+  const realTimeStr = formatRealTime(realTime);
+
+  const htmlEl = vodTimeEl as HTMLElement;
+
+  // 기본 title 속성으로 간단한 툴팁 제공
+  htmlEl.title = `실제 시간: ${realTimeStr}`;
+
+  // 커스텀 툴팁 요소 찾기/생성
+  let tooltipEl = vodTimeEl.parentElement?.querySelector(
+    `.${REAL_PLAYBACK_TIME_CLASS}`
+  ) as HTMLElement | null;
+
+  if (!tooltipEl) {
+    tooltipEl = document.createElement("div");
+    tooltipEl.className = REAL_PLAYBACK_TIME_CLASS;
+    tooltipEl.style.cssText = `
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 20, 20, 0.95);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(4px);
+    `;
+
+    // 부모를 relative로 설정
+    const parent = vodTimeEl.parentElement;
+    if (parent) {
+      (parent as HTMLElement).style.position = "relative";
+      parent.appendChild(tooltipEl);
+    }
+
+    // 마우스 이벤트 리스너 추가
+    htmlEl.addEventListener("mouseenter", () => {
+      if (tooltipEl) tooltipEl.style.opacity = "1";
+    });
+    htmlEl.addEventListener("mouseleave", () => {
+      if (tooltipEl) tooltipEl.style.opacity = "0";
+    });
+  }
+
+  // 툴팁 내용 업데이트
+  const displayText = `실제 시간: ${realTimeStr}`;
+  if (tooltipEl.textContent !== displayText) {
+    tooltipEl.textContent = displayText;
+  }
+}
+
 // seeking preview 감시 및 업데이트
 async function setupSeekingPreviewObserver() {
   const videoId = getVideoIdFromLocation();
@@ -156,6 +223,7 @@ async function setupSeekingPreviewObserver() {
   let rafId: number | null = null;
   let isProcessing = false;
   let lastSeekTime = "";
+  let lastPlaybackTime = "";
 
   const debouncedProcess = () => {
     if (rafId !== null) return;
@@ -167,68 +235,85 @@ async function setupSeekingPreviewObserver() {
       isProcessing = true;
 
       try {
+        // 1. Seeking Preview 처리
         const previewTimeEl = document.querySelector(
           SEEKING_PREVIEW_TIME_SELECTOR
         );
-        if (!previewTimeEl) {
-          isProcessing = false;
-          return;
+        if (previewTimeEl) {
+          const firstChild = previewTimeEl.firstChild;
+          if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
+            const seekTimeStr = firstChild.textContent?.trim() || "";
+            const hasElement = !!previewTimeEl.parentElement?.querySelector(
+              `.${REAL_TIME_CLASS}`
+            );
+
+            if (
+              (seekTimeStr !== lastSeekTime || !hasElement) &&
+              /^\d+:\d+/.test(seekTimeStr)
+            ) {
+              lastSeekTime = seekTimeStr;
+              updateRealTimeElement(previewTimeEl, liveOpenDate, seekTimeStr);
+            }
+          }
         }
 
-        // 첫 번째 텍스트 노드에서 시간 추출
-        const firstChild = previewTimeEl.firstChild;
-        if (!firstChild || firstChild.nodeType !== Node.TEXT_NODE) {
-          isProcessing = false;
-          return;
-        }
+        // 2. Playback Time (컨트롤바) 처리
+        const vodTimeEls = document.querySelectorAll(VOD_TIME_SELECTOR);
+        vodTimeEls.forEach((vodTimeEl) => {
+          // 전체 텍스트에서 현재 재생 시간 부분만 추출 (예: "0:23 / 1:45:00" -> "0:23")
+          // 자식 요소들의 텍스트가 섞일 수 있으므로 주의
+          const currentText = vodTimeEl.textContent || "";
+          const match = currentText.trim().match(/^(\d+(?::\d+)*)/);
 
-        const seekTimeStr = firstChild.textContent?.trim() || "";
+          if (match) {
+            const playbackTimeStr = match[1];
+            const hasElement = !!vodTimeEl.querySelector(
+              `.${REAL_PLAYBACK_TIME_CLASS}`
+            );
 
-        // 같은 시간이면 스킵 (중복 처리 방지)
-        if (seekTimeStr === lastSeekTime) {
-          isProcessing = false;
-          return;
-        }
-
-        if (seekTimeStr && /^\d+:\d+/.test(seekTimeStr)) {
-          lastSeekTime = seekTimeStr;
-          updateRealTimeElement(previewTimeEl, liveOpenDate, seekTimeStr);
-        }
+            if (playbackTimeStr !== lastPlaybackTime || !hasElement) {
+              lastPlaybackTime = playbackTimeStr;
+              updateRealPlaybackTimeElement(
+                vodTimeEl,
+                liveOpenDate,
+                playbackTimeStr
+              );
+            }
+          }
+        });
       } finally {
         isProcessing = false;
       }
     });
   };
 
-  // MutationObserver로 seeking preview 요소 감시
+  // MutationObserver로 관련 요소 감시
   const observer = new MutationObserver((mutations) => {
-    // seeking preview 관련 변경만 처리
     for (const mutation of mutations) {
       const target = mutation.target as Node;
 
       // 우리가 추가한 요소의 변경은 무시
       if (target.nodeType === Node.ELEMENT_NODE) {
         const el = target as Element;
-        if (el.classList?.contains(REAL_TIME_CLASS)) continue;
-        if (el.closest?.(`.${REAL_TIME_CLASS}`)) continue;
-      }
-      if (target.nodeType === Node.TEXT_NODE) {
-        const parent = target.parentElement;
-        if (parent?.classList?.contains(REAL_TIME_CLASS)) continue;
+        if (
+          el.classList?.contains(REAL_TIME_CLASS) ||
+          el.classList?.contains(REAL_PLAYBACK_TIME_CLASS)
+        )
+          continue;
       }
 
-      // seeking preview 요소가 존재하면 처리
-      const previewExists = document.querySelector(
-        SEEKING_PREVIEW_TIME_SELECTOR
-      );
-      if (previewExists) {
+      // 관련 요소가 존재하거나 변경되었으면 처리
+      if (
+        document.querySelector(SEEKING_PREVIEW_TIME_SELECTOR) ||
+        document.querySelector(VOD_TIME_SELECTOR)
+      ) {
         debouncedProcess();
         break;
       }
     }
   });
 
-  // document 전체를 감시 (seeking preview가 동적으로 생성되므로)
+  // document 전체를 감시 (요소들이 동적으로 생성/변경되므로)
   observer.observe(document.documentElement, {
     childList: true,
     subtree: true,

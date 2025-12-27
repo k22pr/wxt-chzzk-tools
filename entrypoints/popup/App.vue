@@ -50,14 +50,14 @@ const onUpdateColor = (color: string) => {
     }"
   >
     <div w="full" pb="4" px="4">
-      <div w="full" grid gap="2" flex items="center" py="2" px="4">
+      <div w="full" grid gap="2" flex items="center" pt="3" px="4">
         <img src="@/assets/logo.svg" class="logo vue" w="32px" />
         <div flex items="end" gap="2">
           <div text="20px center" font="medium">Chzzk Tools</div>
           <div text="xs gray-6" font="mono">v{{ version }}</div>
         </div>
       </div>
-      <div w="full" px="4" mt="8" v-if="isLoaded">
+      <div w="full" px="4" v-if="isLoaded">
         <OptionContent @update-color="onUpdateColor" />
       </div>
     </div>
@@ -67,7 +67,7 @@ const onUpdateColor = (color: string) => {
 
 <style scoped lang="scss">
 .logo {
-  height: 6em;
+  height: 5em;
   will-change: filter;
   transition: filter 300ms;
 }
