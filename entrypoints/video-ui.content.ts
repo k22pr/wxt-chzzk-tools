@@ -53,14 +53,12 @@ const CSS = `
     bottom: 45px !important;
   }
 
-  /*
   #live_player_layout:not(.pip_mode) .pzp-pc .pzp-pc__volume-slider,
   #player_layout:not(.pip_mode) .pzp-pc .pzp-pc__volume-slider {
     width:72px;
     margin-right:13px;
     overflow:visible;
   }
-  */
 
   #live_player_layout:not(.pip_mode) .pzp-pc .pzp-ui-progress__div,
   #player_layout:not(.pip_mode) .pzp-pc .pzp-ui-progress__div {

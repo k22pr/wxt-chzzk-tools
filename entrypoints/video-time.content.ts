@@ -147,8 +147,14 @@ function updateRealPlaybackTimeElement(
   // 기본 title 속성으로 간단한 툴팁 제공
   htmlEl.title = `실제 시간: ${realTimeStr}`;
 
+  // VOD 시간 컨테이너 찾기 (pzp-vod-time, pzp-pc-vod-time, pzp-pc__vod-time)
+  const containerEl = document.querySelector(
+    "[class*='pzp-vod-time'], [class*='pzp-pc-vod-time'], [class*='pzp-pc__vod-time']"
+  );
+  if (!containerEl) return;
+
   // 커스텀 툴팁 요소 찾기/생성
-  let tooltipEl = vodTimeEl.parentElement?.querySelector(
+  let tooltipEl = containerEl.querySelector(
     `.${REAL_PLAYBACK_TIME_CLASS}`
   ) as HTMLElement | null;
 
@@ -157,29 +163,25 @@ function updateRealPlaybackTimeElement(
     tooltipEl.className = REAL_PLAYBACK_TIME_CLASS;
     tooltipEl.style.cssText = `
       position: absolute;
-      bottom: 100%;
+      top:-60px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(20, 20, 20, 0.95);
+      background:rgba(0,0,0,.6);
       color: #fff;
       padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
+      border-radius: 14px;
+      font-size: 13px;
       white-space: nowrap;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.2s;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(6px);
     `;
 
-    // 부모를 relative로 설정
-    const parent = vodTimeEl.parentElement;
-    if (parent) {
-      (parent as HTMLElement).style.position = "relative";
-      parent.appendChild(tooltipEl);
-    }
+    // 컨테이너를 relative로 설정
+    (containerEl as HTMLElement).style.position = "relative";
+    containerEl.appendChild(tooltipEl);
 
     // 마우스 이벤트 리스너 추가
     htmlEl.addEventListener("mouseenter", () => {
