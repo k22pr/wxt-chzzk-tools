@@ -6,6 +6,7 @@ const props = defineProps<{
     useVideoUI: boolean;
     useHideBanner: boolean;
     useHideRecommend: boolean;
+    useSwapNav: boolean;
   };
 }>();
 
@@ -118,7 +119,7 @@ const onRecommendChange = (value: boolean) => {
 </script>
 
 <template>
-  <div w="full" grid gap="4" mt="4">
+  <div w="full" grid gap="4">
     <div w="full" grid gap="2">
       <div w="full" flex items="top" justify="between">
         <div w="full">
@@ -135,6 +136,22 @@ const onRecommendChange = (value: boolean) => {
         </div>
       </div>
     </div>
+    <!-- <div w="full" grid gap="2">
+      <div w="full" flex items="top" justify="between">
+        <div w="full">
+          <div text="4">네비게이션 순서 변경</div>
+          <div text="3 gray-5">사이드바의 팔로잉을 최상단으로 올립니다.</div>
+        </div>
+        <div>
+          <a-switch
+            :checked="options.useSwapNav"
+            @update:checked="
+              emit('update:options', { ...options, useSwapNav: $event })
+            "
+          />
+        </div>
+      </div>
+    </div> -->
     <div w="full" grid gap="2">
       <div
         w="full"

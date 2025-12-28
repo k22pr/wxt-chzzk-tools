@@ -8,6 +8,7 @@ defineProps<{
     useVideoOverlay: boolean;
     useAutoRefresh: boolean;
     useVideoTime: boolean;
+    useThumbnailZoom: boolean;
   };
 }>();
 
@@ -17,7 +18,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div w="full" grid gap="4" mt="4">
+  <div w="full" grid gap="4">
     <div w="full" grid gap="2">
       <div w="full" flex items="top" class="flex" justify="between">
         <div w="full">
@@ -101,6 +102,24 @@ const emit = defineEmits<{
             :checked="options.useVideoTime"
             @update:checked="
               emit('update:options', { ...options, useVideoTime: $event })
+            "
+          />
+        </div>
+      </div>
+    </div>
+    <div w="full" grid gap="2">
+      <div w="full" flex items="top" justify="between">
+        <div w="full">
+          <div text="4">썸네일 확대</div>
+          <div text="3 gray-5">
+            비디오 카드 썸네일에 마우스를 올리면 확대됩니다.
+          </div>
+        </div>
+        <div>
+          <a-switch
+            :checked="options.useThumbnailZoom"
+            @update:checked="
+              emit('update:options', { ...options, useThumbnailZoom: $event })
             "
           />
         </div>

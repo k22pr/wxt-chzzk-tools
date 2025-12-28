@@ -70,8 +70,9 @@ export default defineContentScript({
           useHideRecommend?: boolean;
         } | null;
 
-        const useBanner = saved?.useHideBanner !== false;
-        const useRecommend = saved?.useHideRecommend !== false;
+        // 기본값: 비활성화 (false)
+        const useBanner = saved?.useHideBanner === true;
+        const useRecommend = saved?.useHideRecommend === true;
 
         // 상태가 변경되었을 때만 적용
         if (cachedBanner !== useBanner || cachedRecommend !== useRecommend) {
@@ -82,9 +83,9 @@ export default defineContentScript({
         }
       } catch {
         if (cachedBanner === null) {
-          cachedBanner = true;
-          cachedRecommend = true;
-          applyStyles(true, true);
+          cachedBanner = false;
+          cachedRecommend = false;
+          applyStyles(false, false);
         }
       }
     };
@@ -96,7 +97,7 @@ export default defineContentScript({
     if (!document.head) {
       const observer = new MutationObserver(() => {
         if (document.head) {
-          applyStyles(cachedBanner ?? true, cachedRecommend ?? true);
+          applyStyles(cachedBanner ?? false, cachedRecommend ?? false);
           observer.disconnect();
         }
       });

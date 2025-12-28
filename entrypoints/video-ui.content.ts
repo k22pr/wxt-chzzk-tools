@@ -27,8 +27,8 @@ const CSS = `
 
   #live_player_layout:not(.pip_mode) .pzp-pc--controls .pzp-pc__bottom,
   #player_layout:not(.pip_mode) .pzp-pc--controls .pzp-pc__bottom {
-    backdrop-filter: blur(6px) saturate(90%);
-    background: rgba(25, 25, 28, 0.5);
+    backdrop-filter: blur(8px) saturate(60%);
+    background: rgba(15, 17, 19, 0.6);
     border: 1px solid rgba(255,255,255,0.1);
     box-shadow:0px 0px 30px rgba(0,0,0,0.6);
   }
@@ -52,7 +52,6 @@ const CSS = `
   #player_layout:not(.pip_mode) .pzp-pc .live-bar-box {
     bottom: 45px !important;
   }
-
 
   /*
   #live_player_layout:not(.pip_mode) .pzp-pc .pzp-pc__volume-slider,

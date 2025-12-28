@@ -15,8 +15,10 @@ const DEFAULT_OPTIONS = {
   useAutoRefresh: true,
   useVideoTime: true,
   useVideoUI: true,
-  useHideBanner: true,
-  useHideRecommend: true,
+  useHideBanner: false,
+  useHideRecommend: false,
+  useSwapNav: true,
+  useThumbnailZoom: false,
   themeName: "primary",
 };
 
@@ -27,8 +29,10 @@ const options = reactive({
   useAutoRefresh: true,
   useVideoTime: true,
   useVideoUI: true,
-  useHideBanner: true,
-  useHideRecommend: true,
+  useHideBanner: false,
+  useHideRecommend: false,
+  useSwapNav: true,
+  useThumbnailZoom: false,
   themeName: "primary",
 });
 
@@ -67,16 +71,44 @@ const updateOptions = (newOptions: Partial<typeof options>) => {
   <div w="full">
     <a-tabs v-model:activeKey="activeKey">
       <a-tab-pane key="1" tab="기능">
-        <FunctionContent :options="options" @update:options="updateOptions" />
+        <div class="panel-scroll">
+          <FunctionContent :options="options" @update:options="updateOptions" />
+        </div>
       </a-tab-pane>
       <a-tab-pane key="2" tab="모양">
-        <DesignContent :options="options" @update:options="updateOptions" />
+        <div class="panel-scroll">
+          <DesignContent :options="options" @update:options="updateOptions" />
+        </div>
       </a-tab-pane>
     </a-tabs>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.panel-scroll {
+  max-height: 300px;
+  overflow-y: scroll;
+  padding: 0px 8px 20px 4px;
+
+  // 커스텀 스크롤바
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
 .color-button {
   width: 16px;
   height: 16px;
