@@ -30,16 +30,16 @@ VOD 실제 시간
 [모양 탭]
 
 동영상 재생바 스타일 변경
-- 동영상 재생바에 블러(Blur) 디자인을 적용합니다.
+- 동영상 재생바에 디자인을 적용합니다.
 - PIP(미니 플레이어) 모드에서는 기본 디자인이 유지됩니다.
 
 기술 스택
 =========
 
-- WXT (https://wxt.dev/) - 브라우저 확장 프레임워크
-- Vue 3 (https://vuejs.org/) - UI 프레임워크
-- Ant Design Vue (https://antdv.com/) - UI 컴포넌트 라이브러리
-- UnoCSS (https://unocss.dev/) - CSS 유틸리티
+- WXT
+- Vue 3
+- Ant Design Vue
+- UnoCSS
 
 
 라이선스
