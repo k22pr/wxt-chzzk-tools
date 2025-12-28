@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chzzk Tools - 치지직 도구</title>
+    <meta
+      name="description"
+      content="치지직(CHZZK) 방송 시청과 관련된 유틸리티를 제공하는 브라우저 확장 프로그램입니다."
+    />
+    <!-- Pretendard Font -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+    />
+    <!-- Iconify -->
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0a0a0a 0%,
+          #141414 50%,
+          #1a1a1a 100%
+        );
+        color: #fff;
+        min-height: 100vh;
+        line-height: 1.5;
+        font-size: 14px;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 16px;
+      }
+
+      /* Hero Section */
+      .hero {
+        text-align: center;
+        padding: 50px 0;
+      }
+
+      .hero-logo {
+        width: 72px;
+        height: 72px;
+        margin-bottom: 20px;
+        filter: drop-shadow(0 0 20px rgba(0, 248, 137, 0.3));
+      }
+
+      .hero h1 {
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, #00f889, #00d4ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hero p {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.7);
+        max-width: 500px;
+        margin: 0 auto 24px;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #00f889, #00d4aa);
+        color: #000;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 248, 137, 0.3);
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+      }
+
+      /* Features Section */
+      .features {
+        padding: 40px 0;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+      }
+
+      .feature-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+      }
+
+      .feature-card:hover {
+        background: rgba(255, 255, 255, 0.06);
+        transform: translateY(-3px);
+        border-color: rgba(0, 248, 137, 0.3);
+      }
+
+      .feature-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 14px;
+        font-size: 20px;
+        color: #00f889;
+      }
+
+      .feature-card h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .feature-card p {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.85rem;
+        line-height: 1.5;
+      }
+
+      /* Footer */
+      footer {
+        text-align: center;
+        padding: 28px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.85rem;
+      }
+
+      footer a {
+        color: #00f889;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 2rem;
+        }
+
+        .hero p {
+          font-size: 1rem;
+        }
+
+        .container {
+          padding: 40px 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Hero Section -->
+      <section class="hero">
+        <img src="./logo.svg" alt="Chzzk Tools Logo" class="hero-logo" />
+        <h1>Chzzk Tools</h1>
+        <p>
+          치지직(CHZZK) 방송 시청을 더욱 편리하게 만들어주는 브라우저 확장
+          프로그램입니다.
+        </p>
+        <div class="btn-group">
+          <a
+            href="https://chromewebstore.google.com/detail/%EC%B9%98%EC%A7%81%ED%88%B4-chzzk-tools/nbmjbongmdifmoghmnndhdopfleppnoo?hl=ko"
+            class="btn btn-primary"
+            target="_blank"
+          >
+            <span
+              class="iconify"
+              data-icon="lucide:chrome"
+              data-width="20"
+            ></span>
+            Chrome 웹 스토어
+          </a>
+          <a
+            href="https://github.com/k22pr/wxt-chzzk-tools"
+            class="btn btn-secondary"
+            target="_blank"
+          >
+            <span
+              class="iconify"
+              data-icon="lucide:github"
+              data-width="20"
+            ></span>
+            GitHub
+          </a>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section class="features">
+        <h2 class="section-title">주요 기능</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <span
+                class="iconify"
+                data-icon="lucide:clapperboard"
+                data-width="24"
+              ></span>
+            </div>
+            <h3>자동 화질 변경</h3>
+            <p>
+              광고 차단 프로그램 사용 시 화질이 낮아지는 문제를 해결하고,
+              자동으로 1080p로 재생합니다.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <span
+                class="iconify"
+                data-icon="lucide:rewind"
+                data-width="24"
+              ></span>
+            </div>
+            <h3>LIVE 재생바</h3>
+            <p>
+              라이브 방송 접속 시점부터 최대 1분 30초간 되감기가 가능한 재생바를
+              제공합니다.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <span
+                class="iconify"
+                data-icon="lucide:volume-2"
+                data-width="24"
+              ></span>
+            </div>
+            <h3>음향 보정</h3>
+            <p>
+              오디오 컴프레서를 통해 소리를 증폭하거나 조절할 수 있습니다.
+              채널별로 설정이 자동 저장됩니다.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <span
+                class="iconify"
+                data-icon="lucide:refresh-cw"
+                data-width="24"
+              ></span>
+            </div>
+            <h3>팔로잉 자동 새로고침</h3>
+            <p>사이드바의 팔로잉 목록을 30초마다 자동으로 새로고침합니다.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <span
+                class="iconify"
+                data-icon="lucide:clock"
+                data-width="24"
+              ></span>
+            </div>
+            <h3>VOD 실제 시간</h3>
+            <p>
+              VOD 탐색 시 마우스를 올리면 실제 방송 시간을 툴팁으로 표시합니다.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <span
+                class="iconify"
+                data-icon="lucide:sparkles"
+                data-width="24"
+              ></span>
+            </div>
+            <h3>프리미엄 UI</h3>
+            <p>
+              동영상 재생바에 세련된 디자인을 적용하여 더 나은 시청 경험을
+              제공합니다.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer>
+        <p style="margin-top: 8px">MIT License</p>
+      </footer>
+    </div>
+  </body>
+</html>
