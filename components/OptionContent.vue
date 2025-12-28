@@ -88,7 +88,7 @@ const updateOptions = (newOptions: Partial<typeof options>) => {
 .panel-scroll {
   max-height: 300px;
   overflow-y: scroll;
-  padding: 0px 8px 20px 4px;
+  padding: 8px 8px 20px 4px;
 
   // 커스텀 스크롤바
   &::-webkit-scrollbar {

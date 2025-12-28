@@ -65,12 +65,18 @@ a:hover {
   }
 }
 
-.ant-tabs-nav-list {
-  width: 100%;
-}
-.ant-tabs-tab {
-  width: 50%;
-  display: flex;
-  justify-content: center;
-  margin: 0px !important;
+body {
+  .ant-tabs-nav-list {
+    width: 100%;
+  }
+  .ant-tabs-tab {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    margin: 0px !important;
+  }
+
+  .ant-tabs-top > .ant-tabs-nav {
+    margin-bottom: 4px;
+  }
 }
