@@ -50,7 +50,7 @@ const onUpdateColor = (color: string) => {
     }"
   >
     <div w="full" py="2">
-      <div w="full" grid gap="2" flex items="center" mt="pt" py="3" px="6">
+      <div w="full" grid gap="2" flex items="center" mt="pt" py="2" px="4">
         <img src="@/assets/logo.svg" class="logo vue" w="32px" />
         <div flex items="end" gap="2">
           <div text="20px center" font="medium">Chzzk Tools</div>
