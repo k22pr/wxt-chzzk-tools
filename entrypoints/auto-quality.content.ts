@@ -128,73 +128,7 @@ async function setupAutoQuality() {
 
 // setupPopupRemover returns a cleanup function
 function setupPopupRemover() {
-  const MSG = "광고 차단 프로그램을 사용 중이신가요?";
-
-  const isPopupContents = (el: Element | null | undefined) =>
-    el instanceof Element &&
-    (el.className + "").includes("popup_contents__") &&
-    !!el.textContent &&
-    el.textContent.includes(MSG);
-
-  const removePopup = (el: Element) => {
-    const container =
-      el.closest(
-        '[role="dialog"], [role="alertdialog"], [class*="popup"], [class*="modal"], [class*="layer"]'
-      ) || el;
-
-    const parent = container.parentElement;
-    if (!parent) return;
-    parent.style.opacity = "0";
-    document.documentElement.style.overflow = "auto";
-    parent.remove();
-  };
-
-  const scan = (root: Document | Element | ShadowRoot | null) => {
-    if (!root) return;
-    const rootAny = root as any;
-    const candidates =
-      rootAny.querySelectorAll?.('[class*="popup_contents__"]') ?? [];
-    candidates.forEach((el: Element) => {
-      if (isPopupContents(el)) removePopup(el);
-    });
-
-    const all = rootAny.querySelectorAll?.("*") ?? [];
-    all.forEach((n: Element & { shadowRoot?: ShadowRoot | null }) => {
-      if (n.shadowRoot) scan(n.shadowRoot);
-    });
-    if ((root as any).shadowRoot) scan((root as any).shadowRoot);
-  };
-
-  const ready = () => scan(document);
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", ready);
-  } else {
-    ready();
-  }
-
-  const mo = new MutationObserver((mutations) => {
-    for (const m of mutations) {
-      m.addedNodes.forEach((node) => {
-        if (node.nodeType === 1) scan(node as Element);
-      });
-      if (m.type === "characterData" && (m.target as any)?.parentElement) {
-        const el = (m.target as any).parentElement.closest?.(
-          '[class*="popup_contents__"]'
-        );
-        if (el && isPopupContents(el)) removePopup(el);
-      }
-    }
-  });
-
-  mo.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-  });
-
-  return () => {
-    mo.disconnect();
-  };
+  return () => {};
 }
 
 export default defineContentScript({
