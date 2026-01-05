@@ -19,6 +19,7 @@ const DEFAULT_OPTIONS = {
   useHideRecommend: false,
   useSwapNav: true,
   useThumbnailZoom: false,
+  useThumbnailRefresh: true,
   themeName: "primary",
 };
 
@@ -33,6 +34,7 @@ const options = reactive({
   useHideRecommend: false,
   useSwapNav: true,
   useThumbnailZoom: false,
+  useThumbnailRefresh: true,
   themeName: "primary",
 });
 

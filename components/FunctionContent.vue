@@ -8,7 +8,7 @@ defineProps<{
     useVideoOverlay: boolean;
     useAutoRefresh: boolean;
     useVideoTime: boolean;
-    useThumbnailZoom: boolean;
+    useThumbnailRefresh: boolean;
   };
 }>();
 
@@ -110,16 +110,19 @@ const emit = defineEmits<{
     <div w="full" grid gap="2">
       <div w="full" flex items="top" justify="between">
         <div w="full">
-          <div text="4">썸네일 확대</div>
+          <div text="4">썸네일 자동 갱신</div>
           <div text="3 gray-5">
-            비디오 카드 썸네일에 마우스를 올리면 확대됩니다.
+            라이브 썸네일을 30초마다 자동으로 갱신합니다.
           </div>
         </div>
         <div>
           <a-switch
-            :checked="options.useThumbnailZoom"
+            :checked="options.useThumbnailRefresh"
             @update:checked="
-              emit('update:options', { ...options, useThumbnailZoom: $event })
+              emit('update:options', {
+                ...options,
+                useThumbnailRefresh: $event,
+              })
             "
           />
         </div>
