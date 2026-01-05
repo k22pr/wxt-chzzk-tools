@@ -1,6 +1,6 @@
 const NAME = "chzzk-tools";
 const spoofedUA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 OPR/124.0.0.0";
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6937.97 Safari/537.36 OPR/115.0.5231.193";
 
 const overload = <T>(
   t: T,
@@ -71,17 +71,17 @@ function patchNavigator(n: Navigator) {
         return originalUAData.mobile;
       },
       get platform() {
-        return "Windows";
+        return "macOS";
       },
       getHighEntropyValues: async (hints: string[]) => {
         const values = await originalUAData.getHighEntropyValues(hints);
-        return { ...values, platform: "Windows" };
+        return { ...values, platform: "macOS" };
       },
       toJSON: () => {
         return {
           brands: originalUAData.brands,
           mobile: originalUAData.mobile,
-          platform: "Windows",
+          platform: "macOS",
         };
       },
     };

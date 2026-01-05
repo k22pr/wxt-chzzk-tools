@@ -1,6 +1,6 @@
-// Windows User-Agent (Opera 브라우저로 위장)
+// Mac User-Agent (Opera 브라우저로 위장)
 const SPOOFED_USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 OPR/124.0.0.0";
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6937.97 Safari/537.36 OPR/115.0.5231.193";
 
 // declarativeNetRequest 규칙 ID
 const RULE_ID = 1;
@@ -32,7 +32,7 @@ export default defineBackground(() => {
                 {
                   header: "sec-ch-ua-platform",
                   operation: "set",
-                  value: '"Windows"',
+                  value: '"macOS"',
                 },
               ],
             },
@@ -61,7 +61,7 @@ export default defineBackground(() => {
                 {
                   header: "sec-ch-ua-platform",
                   operation: "set",
-                  value: '"Windows"',
+                  value: '"macOS"',
                 },
               ],
             },
@@ -90,7 +90,7 @@ export default defineBackground(() => {
                 {
                   header: "sec-ch-ua-platform",
                   operation: "set",
-                  value: '"Windows"',
+                  value: '"macOS"',
                 },
               ],
             },
