@@ -31,7 +31,7 @@ export default defineContentScript({
       originalNextSibling: ChildNode | null;
     } | null = null;
 
-    console.log("[Chzzk Tools] 채팅 오버레이 스크립트 로드됨");
+    console.log("[Pzzk Tools] 채팅 오버레이 스크립트 로드됨");
 
     // 오버레이 스타일
     const OVERLAY_STYLES = `
@@ -113,7 +113,7 @@ export default defineContentScript({
 
       if (!videoContainer || !chatList) {
         console.warn(
-          "[Chzzk Tools] 비디오 컨테이너 또는 채팅 리스트를 찾을 수 없습니다"
+          "[Pzzk Tools] 비디오 컨테이너 또는 채팅 리스트를 찾을 수 없습니다"
         );
         return false;
       }
@@ -151,7 +151,7 @@ export default defineContentScript({
       }
 
       isOverlayMode = true;
-      console.log("[Chzzk Tools] 채팅 오버레이 활성화됨");
+      console.log("[Pzzk Tools] 채팅 오버레이 활성화됨");
       return true;
     }
 
@@ -182,7 +182,7 @@ export default defineContentScript({
 
       chatRestoreInfo = null;
       isOverlayMode = false;
-      console.log("[Chzzk Tools] 채팅 오버레이 비활성화됨");
+      console.log("[Pzzk Tools] 채팅 오버레이 비활성화됨");
       return true;
     }
 

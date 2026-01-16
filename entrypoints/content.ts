@@ -9,7 +9,7 @@ function injectPublicStyle(file: string) {
   if (cssLink) return; // 중복 방지
   const url = browser.runtime.getURL(`injected/${file}` as any);
   cssLink = document.createElement("link");
-  cssLink.id = "chzzk-tools-style";
+  cssLink.id = "pzzk-tools-style";
   cssLink.rel = "stylesheet";
   cssLink.href = url;
   (document.head || document.documentElement).appendChild(cssLink);
@@ -30,7 +30,7 @@ export default defineContentScript({
 
     // 트리거 요소 생성 (테마 색상 등을 위한 데이터 속성 컨테이너)
     triggerElement = document.createElement("div");
-    triggerElement.id = "chzzk-tools-trigger";
+    triggerElement.id = "pzzk-tools-trigger";
     triggerElement.style.display = "none";
     document.body.appendChild(triggerElement);
 

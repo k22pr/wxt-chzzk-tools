@@ -1,5 +1,5 @@
 const VIDEO_SELECTOR = "video.webplayer-internal-video";
-const NAME = "chzzk-tools";
+const NAME = "pzzk-tools";
 
 function modifyDataObject(data: any) {
   try {
@@ -67,7 +67,7 @@ function patchFetch() {
     // live-detail 요청만 수정
     return _fetch(input as any, init).then(async (resp) => {
       try {
-        console.log("[chzzk-tools] /live-detail 호출", {
+        console.log("[pzzk-tools] /live-detail 호출", {
           href: window.location.href,
           time: new Date().toISOString(),
         });

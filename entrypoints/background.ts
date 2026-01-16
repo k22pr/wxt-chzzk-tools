@@ -107,9 +107,9 @@ export default defineBackground(() => {
         ],
       });
 
-      console.log("[chzzk-tools] User-Agent spoofing rule registered");
+      console.log("[pzzk-tools] User-Agent spoofing rule registered");
     } catch (error) {
-      console.error("[chzzk-tools] Failed to register User-Agent rule:", error);
+      console.error("[pzzk-tools] Failed to register User-Agent rule:", error);
     }
   };
 

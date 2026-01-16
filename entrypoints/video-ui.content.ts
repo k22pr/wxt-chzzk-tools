@@ -6,7 +6,7 @@
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
 
-const NAME = "[chzzk-tools][video-ui]";
+const NAME = "[pzzk-tools][video-ui]";
 
 const CSS = `
   #live_player_layout:not(.pip_mode) .pzp-pc .pzp-pc__bottom,
@@ -133,7 +133,7 @@ const CSS = `
   }
 `;
 
-const STYLE_ID = "chzzk-tools-video-ui";
+const STYLE_ID = "pzzk-tools-video-ui";
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],

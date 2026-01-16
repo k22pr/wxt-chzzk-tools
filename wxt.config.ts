@@ -7,7 +7,7 @@ export default defineConfig({
     excludeEntrypoints: ["background"],
   },
   manifest: {
-    name: "치직툴 (chzzk-tools) - 치지직 도구",
+    name: "파직툴 - 라이브 스트리밍 도구",
     permissions: ["storage", "declarativeNetRequest"],
     host_permissions: [
       "https://chzzk.naver.com/*",

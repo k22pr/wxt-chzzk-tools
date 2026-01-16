@@ -57,7 +57,7 @@ export default defineContentScript({
       expiresAt?: number;
     };
 
-    const STORAGE_KEY_PREFIX = "chzzk-tools-comp:";
+    const STORAGE_KEY_PREFIX = "pzzk-tools-comp:";
     const STORAGE_VERSION = 1;
     // 기본 유효기간: 30일 (ms)
     const STORAGE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
@@ -245,9 +245,9 @@ export default defineContentScript({
       }
       media.muted = false;
 
-      if (!document.getElementById("chzzk-video-overlay-style")) {
+      if (!document.getElementById("pzzk-video-overlay-style")) {
         const style = document.createElement("style");
-        style.id = "chzzk-video-overlay-style";
+        style.id = "pzzk-video-overlay-style";
         document.head.appendChild(style);
       }
 

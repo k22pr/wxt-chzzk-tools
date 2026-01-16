@@ -1,4 +1,4 @@
-const NAME = "chzzk-tools";
+const NAME = "pzzk-tools";
 const spoofedUA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6937.97 Safari/537.36 OPR/115.0.5231.193";
 

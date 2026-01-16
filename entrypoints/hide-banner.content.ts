@@ -6,7 +6,7 @@
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
 
-const NAME = "[chzzk-tools][hide-banner]";
+const NAME = "[pzzk-tools][hide-banner]";
 
 // 상단 배너 숨김 CSS
 const CSS_BANNER = `
@@ -22,8 +22,8 @@ const CSS_RECOMMEND = `
   }
 `;
 
-const STYLE_ID_BANNER = "chzzk-tools-hide-banner";
-const STYLE_ID_RECOMMEND = "chzzk-tools-hide-recommend";
+const STYLE_ID_BANNER = "pzzk-tools-hide-banner";
+const STYLE_ID_RECOMMEND = "pzzk-tools-hide-recommend";
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],

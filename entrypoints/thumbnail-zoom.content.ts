@@ -6,8 +6,8 @@
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
 
-const NAME = "[chzzk-tools][thumbnail-zoom]";
-const STYLE_ID = "chzzk-tools-thumbnail-zoom";
+const NAME = "[pzzk-tools][thumbnail-zoom]";
+const STYLE_ID = "pzzk-tools-thumbnail-zoom";
 
 const CSS = `
   /* 확대된 썸네일 스타일 */

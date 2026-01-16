@@ -16,7 +16,7 @@ const emit = defineEmits<{
 }>();
 
 // 요소 하이라이트 기능 - absolute div 오버레이 사용
-const HIGHLIGHT_ID = "chzzk-tools-highlight-overlay";
+const HIGHLIGHT_ID = "pzzk-tools-highlight-overlay";
 
 const highlightElement = async (selector: string, show: boolean) => {
   try {

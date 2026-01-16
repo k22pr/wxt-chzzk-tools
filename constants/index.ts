@@ -1,1 +1,1 @@
-export const STORAGE_KEY = "chzzk-tools:options";
+export const STORAGE_KEY = "pzzk-tools:options";

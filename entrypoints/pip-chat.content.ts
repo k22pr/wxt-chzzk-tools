@@ -46,7 +46,7 @@ export default defineContentScript({
     // Document PIP API 지원 확인
     if (!("documentPictureInPicture" in window)) {
       console.warn(
-        "[Chzzk Tools] Document Picture-in-Picture API가 지원되지 않습니다. Chrome 116+ 필요."
+        "[Pzzk Tools] Document Picture-in-Picture API가 지원되지 않습니다. Chrome 116+ 필요."
       );
       return;
     }
@@ -59,7 +59,7 @@ export default defineContentScript({
     const mountedButtons = new WeakSet<Element>();
     let pipWindow: Window | null = null;
 
-    console.log("[Chzzk Tools] PIP+채팅 스크립트 로드됨");
+    console.log("[Pzzk Tools] PIP+채팅 스크립트 로드됨");
 
     // PIP 창에 적용할 스타일 (오버레이 레이아웃)
     const PIP_STYLES = `
@@ -192,13 +192,13 @@ export default defineContentScript({
     async function openPipWithChat() {
       const video = document.querySelector(VIDEO_SELECTOR) as HTMLVideoElement;
       if (!video) {
-        console.error("[Chzzk Tools] 비디오 요소를 찾을 수 없습니다.");
+        console.error("[Pzzk Tools] 비디오 요소를 찾을 수 없습니다.");
         return;
       }
 
       const channelId = getChannelId();
       if (!channelId) {
-        console.error("[Chzzk Tools] 채널 ID를 찾을 수 없습니다.");
+        console.error("[Pzzk Tools] 채널 ID를 찾을 수 없습니다.");
         return;
       }
 
@@ -261,7 +261,7 @@ export default defineContentScript({
           originalStyles,
         };
 
-        console.log("[Chzzk Tools] 원본 비디오를 PIP 창으로 이동");
+        console.log("[Pzzk Tools] 원본 비디오를 PIP 창으로 이동");
 
         // 채팅 섹션
         const chatSection = pipWindow.document.createElement("div");
@@ -308,12 +308,12 @@ export default defineContentScript({
           (originalChatList as HTMLElement).style.position = "relative";
 
           chatContent.appendChild(originalChatList);
-          console.log("[Chzzk Tools] 원본 채팅 리스트를 PIP 창으로 이동");
+          console.log("[Pzzk Tools] 원본 채팅 리스트를 PIP 창으로 이동");
         } else {
           // 원본 채팅을 못 찾으면 안내 메시지
           chatContent.innerHTML =
             '<div style="color: #888; padding: 20px; text-align: center;">채팅을 불러올 수 없습니다</div>';
-          console.warn("[Chzzk Tools] 채팅 리스트를 찾을 수 없습니다");
+          console.warn("[Pzzk Tools] 채팅 리스트를 찾을 수 없습니다");
         }
 
         chatSection.appendChild(chatHeader);
@@ -365,7 +365,7 @@ export default defineContentScript({
 
         // PIP 창 닫힐 때 정리 - 원본 비디오와 채팅을 원래 위치로 복원
         pipWindow.addEventListener("pagehide", () => {
-          console.log("[Chzzk Tools] PIP 창 닫힘, 비디오 및 채팅 복원");
+          console.log("[Pzzk Tools] PIP 창 닫힘, 비디오 및 채팅 복원");
 
           // 원본 비디오를 원래 위치로 복원
           if (restoreInfo.originalParent) {
@@ -411,7 +411,7 @@ export default defineContentScript({
           pipWindow = null;
         });
       } catch (error) {
-        console.error("[Chzzk Tools] PIP 창 열기 실패:", error);
+        console.error("[Pzzk Tools] PIP 창 열기 실패:", error);
       }
     }
 

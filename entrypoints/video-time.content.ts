@@ -11,11 +11,11 @@ import {
   getIdFromPath,
 } from "@/utils/content-helpers";
 
-const NAME = "[chzzk-tools][video-time]";
+const NAME = "[pzzk-tools][video-time]";
 const SEEKING_PREVIEW_TIME_SELECTOR = "[class*='pzp-seeking-preview__time']";
 const VOD_TIME_SELECTOR = "[class*='pzp-pc__vod-time']";
-const REAL_TIME_CLASS = "chzzk-tools-real-time";
-const REAL_PLAYBACK_TIME_CLASS = "chzzk-tools-real-playback-time";
+const REAL_TIME_CLASS = "pzzk-tools-real-time";
+const REAL_PLAYBACK_TIME_CLASS = "pzzk-tools-real-playback-time";
 
 // liveOpenDate 캐시 (videoId -> Date)
 let cachedLiveOpenDate: Date | null = null;

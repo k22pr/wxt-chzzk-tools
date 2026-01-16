@@ -1,6 +1,6 @@
 {
-  "name": "chzzk-tools",
-  "description": "치지직(CHZZK) 방송 시청과 관련된 유틸리티를 제공하는 브라우저 확장 프로그램입니다.",
+  "name": "pzzk-tools",
+  "description": "라이브 스트리밍 방송 시청과 관련된 유틸리티를 제공하는 브라우저 확장 프로그램입니다.",
   "private": true,
   "version": "0.6.2",
   "type": "module",

@@ -4,11 +4,7 @@ const emit = defineEmits(["click"]);
 
 <template>
   <span class="pzp-button__tooltip pzp-button__tooltip--top">Compressor</span>
-  <button
-    class="chzzk-tool-btn"
-    @click.stop="emit('click')"
-    title="Chzzk Tools"
-  >
+  <button class="chzzk-tool-btn" @click.stop="emit('click')" title="Pzzk Tools">
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="18"

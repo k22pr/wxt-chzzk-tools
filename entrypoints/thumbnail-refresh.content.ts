@@ -1,7 +1,7 @@
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
 
-const NAME = "chzzk-tools";
+const NAME = "pzzk-tools";
 const REFRESH_INTERVAL = 15000;
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
