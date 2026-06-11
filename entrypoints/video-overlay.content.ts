@@ -179,15 +179,18 @@ export default defineContentScript({
       });
 
       media.addEventListener("volumechange", () => {
-        const channelId = getChannelIdFromLocation();
-        if (!channelId) return;
-
         const chain = audioChainMap.get(video);
         if (!chain) return;
 
         const c = chain.compressor;
         const g = chain.gain;
         const f = chain.filter;
+
+        // 비디오 볼륨 변경 시 AudioContext의 GainNode와 수동 동기화
+        // g.gain.value = media.volume;
+
+        const channelId = getChannelIdFromLocation();
+        if (!channelId) return;
 
         const params: CompressorParams = {
           threshold: c.threshold.value,

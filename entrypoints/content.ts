@@ -24,7 +24,7 @@ export default defineContentScript({
 
     if (document.readyState === "loading") {
       await new Promise((r) =>
-        document.addEventListener("DOMContentLoaded", r)
+        document.addEventListener("DOMContentLoaded", r),
       );
     }
 
@@ -39,8 +39,8 @@ export default defineContentScript({
     if (!options) {
       options = {
         useStreamDesign: false,
-        useAutoQuality: true,
-        useLiveBar: true,
+        useAutoQuality: false,
+        useLiveBar: false,
         useVideoOverlay: true,
         themeName: "primary",
       };
@@ -50,15 +50,15 @@ export default defineContentScript({
       if (!triggerElement) return;
       triggerElement.setAttribute(
         "live-bar",
-        data?.useLiveBar ? "true" : "false"
+        data?.useLiveBar ? "true" : "false",
       );
       triggerElement.setAttribute(
         "auto-quality",
-        data?.useAutoQuality ? "true" : "false"
+        data?.useAutoQuality ? "true" : "false",
       );
       triggerElement.setAttribute(
         "video-overlay",
-        data?.useVideoOverlay ? "true" : "false"
+        data?.useVideoOverlay ? "true" : "false",
       );
       triggerElement.setAttribute("stream-design", "false");
       triggerElement.setAttribute("theme-name", data?.themeName || "#00f889");

@@ -12,10 +12,10 @@ let intervalId: number | null = null;
 function clickRefreshButton() {
   const refreshBtn =
     document.querySelector<HTMLButtonElement>(REFRESH_BTN_SELECTOR);
-  // console.log("[chzzk-tools] Auto-refresh tick, button found:", !!refreshBtn);
+  // console.log("[pzzk-tools] Auto-refresh tick, button found:", !!refreshBtn);
   if (refreshBtn) {
     refreshBtn.click();
-    // console.log("[chzzk-tools] Refresh button clicked");
+    // console.log("[pzzk-tools] Refresh button clicked");
   }
 }
 

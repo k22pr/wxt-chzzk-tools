@@ -20,42 +20,6 @@ const emit = defineEmits<{
 <template>
   <div w="full" grid gap="4">
     <div w="full" grid gap="2">
-      <div w="full" flex items="top" class="flex" justify="between">
-        <div w="full">
-          <div text="4">자동 화질변경</div>
-          <div text="3 gray-5">
-            광고 차단시 화질이 낮아지는 문제를 해결합니다.
-          </div>
-        </div>
-        <div>
-          <a-switch
-            :checked="options.useAutoQuality"
-            @update:checked="
-              emit('update:options', { ...options, useAutoQuality: $event })
-            "
-          />
-        </div>
-      </div>
-    </div>
-    <div w="full" grid gap="2">
-      <div w="full" flex items="top" justify="between">
-        <div w="full">
-          <div text="4">LIVE 재생바</div>
-          <div text="3 gray-5">
-            방송 접속시점부터 최대 1분30초간 재생바를 제공합니다.
-          </div>
-        </div>
-        <div>
-          <a-switch
-            :checked="options.useLiveBar"
-            @update:checked="
-              emit('update:options', { ...options, useLiveBar: $event })
-            "
-          />
-        </div>
-      </div>
-    </div>
-    <div w="full" grid gap="2">
       <div w="full" flex items="top" justify="between">
         <div w="full">
           <div text="4">음향 보정 (Compressor)</div>
@@ -128,5 +92,83 @@ const emit = defineEmits<{
         </div>
       </div>
     </div>
+    <a-tooltip placement="top" title="치지직 정책으로 인해 사용할 수 없습니다.">
+      <div w="full" grid gap="2" relative>
+        <div
+          absolute
+          top="0"
+          left="0"
+          right="0"
+          h="full"
+          flex
+          items="center"
+          justify="center"
+        >
+          <div class="i-line-md-cancel" text="6"></div>
+        </div>
+        <div
+          w="full"
+          flex
+          items="top"
+          class="flex"
+          justify="between"
+          opacity-33
+        >
+          <div w="full">
+            <div text="4">자동 화질변경</div>
+            <div text="3 gray-5">
+              광고 차단시 화질이 낮아지는 문제를 해결합니다.
+            </div>
+          </div>
+          <div>
+            <a-switch
+              :disabled="true"
+              :checked="options.useAutoQuality"
+              @update:checked="
+                emit('update:options', { ...options, useAutoQuality: $event })
+              "
+            />
+          </div>
+        </div>
+      </div>
+      <div w="full" grid gap="2" mt="2">
+        <div
+          absolute
+          top="0"
+          left="0"
+          right="0"
+          h="full"
+          flex
+          items="center"
+          justify="center"
+        >
+          <div i="line-md-cancel"></div>
+        </div>
+        <div
+          w="full"
+          flex
+          items="top"
+          class="flex"
+          justify="between"
+          opacity-33
+        >
+          <div w="full">
+            <div text="4">LIVE 재생바</div>
+            <div text="3 gray-5">
+              방송 접속시점부터 최대 1분30초간 재생바를 제공합니다.
+            </div>
+          </div>
+          <div>
+            <a-switch
+              :disabled="true"
+              :checked="options.useLiveBar"
+              @update:checked="
+                emit('update:options', { ...options, useLiveBar: $event })
+              "
+            />
+          </div>
+        </div>
+      </div>
+    </a-tooltip>
   </div>
 </template>

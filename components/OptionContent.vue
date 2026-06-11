@@ -9,8 +9,8 @@ const emit = defineEmits<{
 }>();
 
 const DEFAULT_OPTIONS = {
-  useAutoQuality: true,
-  useLiveBar: true,
+  useAutoQuality: false,
+  useLiveBar: false,
   useVideoOverlay: true,
   useAutoRefresh: true,
   useVideoTime: true,
@@ -24,8 +24,8 @@ const DEFAULT_OPTIONS = {
 };
 
 const options = reactive({
-  useAutoQuality: true,
-  useLiveBar: true,
+  useAutoQuality: false,
+  useLiveBar: false,
   useVideoOverlay: true,
   useAutoRefresh: true,
   useVideoTime: true,
@@ -52,7 +52,7 @@ watch(
       await storage.setItem(`local:${STORAGE_KEY}`, val);
     } catch (e) {}
   },
-  { deep: true }
+  { deep: true },
 );
 
 // 색상 변경 시 부모로 즉시 통지하여 테마에 반영
@@ -60,7 +60,7 @@ watch(
   () => options.themeName,
   (color) => {
     if (typeof color === "string" && color) emit("update-color", color);
-  }
+  },
 );
 
 // 자식 컴포넌트에서 옵션 업데이트 시
