@@ -1,6 +1,5 @@
-import { storage } from "wxt/utils/storage";
-import { STORAGE_KEY } from "@/constants";
 import {
+  getOptions,
   startUrlWatcher,
   observeElement,
   onDOMReady,
@@ -358,18 +357,11 @@ export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   runAt: "document_idle",
   async main() {
-    try {
-      const saved = (await storage.getItem(`local:${STORAGE_KEY}`)) as {
-        useLiveBar?: boolean;
-      } | null;
+    // 치지직 정책으로 사용 중지 (팝업에서도 잠금): 예전에 켜 둔 저장값이 있어도 실행하지 않음
+    // (치지직 자체 타임머신 재생바와도 겹침)
+    return;
 
-      if (saved && saved.useLiveBar === false) {
-        return;
-      }
-    } catch {
-      // 옵션 로드 실패 시 기본값(사용)으로 진행
-    }
-
+    if (!(await getOptions()).useLiveBar) return;
     setupLiveBarObserver();
   },
 });

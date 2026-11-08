@@ -1,70 +1,34 @@
-import { storage } from "wxt/utils/storage";
-import { STORAGE_KEY } from "@/constants";
+import type { Options } from "@/constants";
+import { getOptions, watchOptions } from "@/utils/content-helpers";
 
 // 새로고침 주기: 30초 고정
-const REFRESH_INTERVAL = 30;
+const REFRESH_INTERVAL = 30_000;
 
-// aria-label로만 검색 (클래스명은 빌드마다 변경될 수 있음)
-const REFRESH_BTN_SELECTOR = 'button[aria-label="새로고침"]';
+// 사이드바 '팔로잉 채널' 섹션(nav aria-label="팔로우")의 새로고침 버튼만 대상으로 함
+// (그냥 첫 '새로고침' 버튼을 찾으면 비로그인/팔로잉 없음 상태에서 '인기 카테고리'를 누르게 됨)
+const REFRESH_BTN_SELECTOR =
+  'nav[aria-label="팔로우"] button[aria-label="새로고침"]';
 
-let intervalId: number | null = null;
+let intervalId: number | undefined;
 
-function clickRefreshButton() {
-  const refreshBtn =
-    document.querySelector<HTMLButtonElement>(REFRESH_BTN_SELECTOR);
-  // console.log("[pzzk-tools] Auto-refresh tick, button found:", !!refreshBtn);
-  if (refreshBtn) {
-    refreshBtn.click();
-    // console.log("[pzzk-tools] Refresh button clicked");
-  }
-}
-
-function startAutoRefresh() {
-  stopAutoRefresh();
-  intervalId = window.setInterval(clickRefreshButton, REFRESH_INTERVAL * 1000);
-}
-
-function stopAutoRefresh() {
-  if (intervalId !== null) {
-    clearInterval(intervalId);
-    intervalId = null;
-  }
-}
-
-async function loadOptionsAndStart() {
-  try {
-    const saved = (await storage.getItem(`local:${STORAGE_KEY}`)) as {
-      useAutoRefresh?: boolean;
-    } | null;
-
-    if (saved?.useAutoRefresh === false) {
-      stopAutoRefresh();
-    } else {
-      startAutoRefresh();
-    }
-  } catch {
-    stopAutoRefresh();
-  }
+function apply({ useAutoRefresh }: Options) {
+  clearInterval(intervalId);
+  intervalId = useAutoRefresh
+    ? window.setInterval(
+        () =>
+          document
+            .querySelector<HTMLButtonElement>(REFRESH_BTN_SELECTOR)
+            ?.click(),
+        REFRESH_INTERVAL,
+      )
+    : undefined;
 }
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   runAt: "document_idle",
   async main() {
-    await loadOptionsAndStart();
-
-    // storage 변경 감지하여 실시간 반영
-    browser.storage.onChanged.addListener((changes) => {
-      const localKey = `local:${STORAGE_KEY}`;
-      const change = changes[localKey] || changes[STORAGE_KEY];
-      if (change) {
-        const newVal = change.newValue ?? {};
-        if (newVal.useAutoRefresh === false) {
-          stopAutoRefresh();
-        } else {
-          startAutoRefresh();
-        }
-      }
-    });
+    apply(await getOptions());
+    watchOptions(apply);
   },
 });

@@ -3,13 +3,7 @@
  * VOD 비디오 페이지에서 seeking preview에 실제 시간(liveOpenDate 기준)을 표시
  */
 
-import { storage } from "wxt/utils/storage";
-import { STORAGE_KEY } from "@/constants";
-import {
-  startUrlWatcher,
-  isVideoPage,
-  getIdFromPath,
-} from "@/utils/content-helpers";
+import { getOptions, startUrlWatcher } from "@/utils/content-helpers";
 
 const NAME = "[pzzk-tools][video-time]";
 const SEEKING_PREVIEW_TIME_SELECTOR = "[class*='pzp-seeking-preview__time']";
@@ -330,18 +324,7 @@ export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   runAt: "document_idle",
   async main() {
-    // 옵션 확인
-    try {
-      const saved = (await storage.getItem(`local:${STORAGE_KEY}`)) as {
-        useVideoTime?: boolean;
-      } | null;
-
-      if (saved?.useVideoTime === false) {
-        return;
-      }
-    } catch {
-      // 옵션 로드 실패 시 기본값(사용)으로 진행
-    }
+    if (!(await getOptions()).useVideoTime) return;
 
     // 현재 관찰자 정리 함수
     let currentCleanup: (() => void) | null = null;

@@ -2,22 +2,13 @@
 const SPOOFED_USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6937.97 Safari/537.36 OPR/115.0.5231.193";
 
-// declarativeNetRequest 규칙 ID
-const RULE_ID = 1;
-
 export default defineBackground(() => {
   // User-Agent 스푸핑 규칙 등록
   const setupUserAgentRule = async () => {
     try {
-      // 기존 규칙 제거
       await browser.declarativeNetRequest.updateDynamicRules({
-        removeRuleIds: [1, 2, 3],
-      });
-
-      // 새 규칙 추가 (각 도메인별로 별도 규칙)
-      await browser.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: [1, 2, 3], // 이전 버전의 도메인별 규칙까지 정리
         addRules: [
-          // chzzk.naver.com
           {
             id: 1,
             priority: 1,
@@ -37,65 +28,8 @@ export default defineBackground(() => {
               ],
             },
             condition: {
-              urlFilter: "||chzzk.naver.com",
-              resourceTypes: [
-                "main_frame",
-                "sub_frame",
-                "xmlhttprequest",
-                "other",
-              ],
-            },
-          },
-          // api.chzzk.naver.com
-          {
-            id: 2,
-            priority: 1,
-            action: {
-              type: "modifyHeaders",
-              requestHeaders: [
-                {
-                  header: "User-Agent",
-                  operation: "set",
-                  value: SPOOFED_USER_AGENT,
-                },
-                {
-                  header: "sec-ch-ua-platform",
-                  operation: "set",
-                  value: '"macOS"',
-                },
-              ],
-            },
-            condition: {
-              urlFilter: "||api.chzzk.naver.com",
-              resourceTypes: [
-                "main_frame",
-                "sub_frame",
-                "xmlhttprequest",
-                "other",
-              ],
-            },
-          },
-          // apis.naver.com
-          {
-            id: 3,
-            priority: 1,
-            action: {
-              type: "modifyHeaders",
-              requestHeaders: [
-                {
-                  header: "User-Agent",
-                  operation: "set",
-                  value: SPOOFED_USER_AGENT,
-                },
-                {
-                  header: "sec-ch-ua-platform",
-                  operation: "set",
-                  value: '"macOS"',
-                },
-              ],
-            },
-            condition: {
-              urlFilter: "||apis.naver.com",
+              // 하위 도메인 포함 (api.chzzk.naver.com 등)
+              requestDomains: ["chzzk.naver.com", "apis.naver.com"],
               resourceTypes: [
                 "main_frame",
                 "sub_frame",
@@ -114,18 +48,9 @@ export default defineBackground(() => {
   };
 
   // 아이콘 업데이트 함수
+  // tabs 권한이 없어 치지직 외 탭은 url이 undefined로 오므로, url이 없으면 회색 아이콘
   const updateIcon = async (tabId: number, url: string | undefined) => {
-    // chrome://, edge://, about: 등의 시스템 페이지에서는 아이콘 설정 불가
-    if (
-      !url ||
-      url.startsWith("chrome://") ||
-      url.startsWith("edge://") ||
-      url.startsWith("about:")
-    ) {
-      return;
-    }
-
-    const isChzzk = url.startsWith("https://chzzk.naver.com/");
+    const isChzzk = url?.startsWith("https://chzzk.naver.com/") ?? false;
 
     try {
       await browser.action.setIcon({
@@ -149,7 +74,7 @@ export default defineBackground(() => {
 
   // 탭 업데이트 시 아이콘 변경
   browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === "complete" && tab.url) {
+    if (changeInfo.status === "complete") {
       updateIcon(tabId, tab.url);
     }
   });

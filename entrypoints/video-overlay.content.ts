@@ -1,26 +1,14 @@
 import { createApp, ComponentPublicInstance } from "vue";
 import VideoOverlay from "@/components/injected/VideoOverlay.vue";
 import ControlBarButton from "@/components/injected/ControlBarButton.vue";
-import { storage } from "wxt/utils/storage";
-import { STORAGE_KEY } from "@/constants";
-import { observeElement } from "@/utils/content-helpers";
+import { getOptions, observeElement } from "@/utils/content-helpers";
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   cssInjectionMode: "ui",
 
   async main(ctx) {
-    try {
-      const saved = (await storage.getItem(`local:${STORAGE_KEY}`)) as {
-        useVideoOverlay?: boolean;
-      } | null;
-
-      if (saved?.useVideoOverlay === false) {
-        return;
-      }
-    } catch {
-      // 옵션 로드 실패 시 기본값(사용)으로 진행
-    }
+    if (!(await getOptions()).useVideoOverlay) return;
 
     const VIDEO_SELECTOR = "video.webplayer-internal-video";
     const CONTROL_BAR_LEFT_SELECTOR = "div.pzp-pc__bottom-buttons-right";
@@ -380,33 +368,39 @@ export default defineContentScript({
       } else {
         controlBar.appendChild(container);
       }
-      const app = createApp(ControlBarButton, {
-        onClick: () => {
-          const overlayInstance = overlayMap.get(video) as any;
-          if (!overlayInstance) return;
+      container.addEventListener("click", (e) => {
+        // 같은 클릭이 document까지 전파되면 오버레이의 바깥 클릭 처리로 바로 닫힘
+        e.stopPropagation();
+        const overlayInstance = overlayMap.get(video) as any;
+        if (!overlayInstance) return;
 
-          const videoElement = video as HTMLElement;
-          const videoRect = videoElement.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
+        const videoElement = video as HTMLElement;
+        const videoRect = videoElement.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
 
-          const x =
-            containerRect.left + containerRect.width / 2 - videoRect.left;
-          const y = containerRect.top - videoRect.top;
+        const x =
+          containerRect.left + containerRect.width / 2 - videoRect.left;
+        const y = containerRect.top - videoRect.top;
 
-          if (typeof overlayInstance.openAt === "function") {
-            overlayInstance.openAt(x, y);
-          } else if (typeof overlayInstance.toggle === "function") {
-            overlayInstance.toggle();
-          }
-        },
+        if (typeof overlayInstance.openAt === "function") {
+          overlayInstance.openAt(x, y);
+        } else if (typeof overlayInstance.toggle === "function") {
+          overlayInstance.toggle();
+        }
       });
-      app.mount(container);
+      createApp(ControlBarButton).mount(container);
     }
 
     // 비디오 요소 감지 및 마운트
+    // SPA 이동 시 비디오 요소가 교체되므로, 완전히 제거된 비디오의 AudioContext는 닫아 누수 방지
+    // (DOM 내 이동은 잠시 분리됐다가 다시 붙으므로 지연 후 isConnected로 판별)
     observeElement({
       selector: VIDEO_SELECTOR,
       onElementAdded: (el) => mountUi(el),
+      onElementRemoved: (el) =>
+        setTimeout(() => {
+          if (!el.isConnected) audioChainMap.get(el)?.context.close();
+        }, 3000),
     });
 
     // 컨트롤 바 감지 및 마운트

@@ -3,15 +3,17 @@
  * 비디오 카드 썸네일에 마우스오버 시 1.3배 확대
  */
 
-import { storage } from "wxt/utils/storage";
-import { STORAGE_KEY } from "@/constants";
+import { getOptions } from "@/utils/content-helpers";
 
 const NAME = "[pzzk-tools][thumbnail-zoom]";
 const STYLE_ID = "pzzk-tools-thumbnail-zoom";
+// 공용 비디오 카드(세로/가로형)의 썸네일 링크: <div class="_container_… _vertical_…"><a class="_thumbnail_…">
+const THUMBNAIL_SELECTOR =
+  ':is([class*=" _vertical_"], [class*=" _horizontal_"]) > a[class^="_thumbnail_"]';
 
 const CSS = `
   /* 확대된 썸네일 스타일 */
-  [class*="video_card_thumbnail__"].chzzk-zoom-active {
+  .chzzk-zoom-active {
     position: absolute !important;
     z-index: 12001 !important;
     transform: scale(1.4) !important;
@@ -32,19 +34,8 @@ export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   runAt: "document_idle",
   async main() {
-    // 옵션 확인
-    try {
-      const saved = (await storage.getItem(`local:${STORAGE_KEY}`)) as {
-        useThumbnailZoom?: boolean;
-      } | null;
-
-      // 기본값: 비활성화 (false)
-      if (saved?.useThumbnailZoom !== true) {
-        console.log(NAME, "Disabled by option");
-        return;
-      }
-    } catch {
-      // 기본값: 비활성화
+    if (!(await getOptions()).useThumbnailZoom) {
+      console.log(NAME, "Disabled by option");
       return;
     }
 
@@ -125,9 +116,7 @@ export default defineContentScript({
 
     // 썸네일에 이벤트 바인딩
     const bindThumbnails = () => {
-      const thumbnails = document.querySelectorAll(
-        '[class*="video_card_thumbnail__"]'
-      );
+      const thumbnails = document.querySelectorAll(THUMBNAIL_SELECTOR);
       thumbnails.forEach((thumbnail) => {
         if (thumbnail.hasAttribute("data-chzzk-zoom-bound")) return;
 

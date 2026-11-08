@@ -1,7 +1,10 @@
 /**
  * ad-fix.content.ts
- * 광고 차단 팝업을 시각적으로 숨기고 키보드 이벤트를 비디오로 전달하는 스크립트
+ * 광고 감지 API를 차단하고, 광고 차단 팝업이 떠 있는 동안 키보드 볼륨 조절을 비디오로 전달하는 스크립트
+ * (팝업 자체는 global.style.css에서 숨김)
  */
+
+const AD_BLOCK_POPUP = '[data-nlog-area="ad_blocking_info_layer"]';
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
@@ -9,7 +12,7 @@ export default defineContentScript({
   world: "MAIN",
   main() {
     console.log(
-      "[pzzk-tools] Ad-Fixer (MAIN) 활성화됨 - v9 (Hide + Passthrough)"
+      "[pzzk-tools] Ad-Fixer (MAIN) 활성화됨 - v10 (Hide + Passthrough)"
     );
 
     // --- 1. 네트워크 차단 (Fetch/XHR) ---
@@ -64,87 +67,31 @@ export default defineContentScript({
       };
     };
 
-    // --- 2. 팝업 시각적 숨기기 (DOM 유지) ---
-    const setupPopupHandler = () => {
-      let popupHidden = false;
-
-      const hidePopup = () => {
-        const popupContents = document.querySelector(
-          '[class*="popup_contents__"]'
-        );
-        if (!popupContents) return;
-        if (
-          !popupContents.textContent?.includes(
-            "광고 차단 프로그램을 사용 중이신가요?"
-          )
-        )
-          return;
-
-        const dimmed = popupContents.closest(
-          '[class*="popup_dimmed__"]'
-        ) as HTMLElement;
-        if (!dimmed || popupHidden) return;
-
-        console.log("[pzzk-tools] 광고 팝업 감지됨, 시각적으로 숨김");
-
-        // DOM은 유지하되 완전히 안 보이게
-        dimmed.style.cssText = `
-          opacity: 0 !important;
-          visibility: hidden !important;
-          pointer-events: none !important;
-          position: fixed !important;
-          top: -9999px !important;
-          left: -9999px !important;
-        `;
-
-        document.documentElement.style.overflow = "auto";
-        document.body.style.overflow = "auto";
-        popupHidden = true;
-
-        // 비디오 포커스 및 플레이어 컨테이너 포커스
-        const player = document.querySelector(".pzp-pc") as HTMLElement;
-        const video = document.querySelector(
-          "video.webplayer-internal-video"
-        ) as HTMLElement;
-
-        if (player) {
-          player.focus();
-          console.log("[pzzk-tools] 플레이어 컨테이너 포커스");
-        }
-        if (video) {
-          video.focus();
-          console.log("[pzzk-tools] 비디오 포커스");
-        }
-      };
-
-      setInterval(hidePopup, 500);
-    };
-
-    // --- 3. 키보드 이벤트 전달 (볼륨 조절) ---
+    // --- 2. 키보드 이벤트 전달 (볼륨 조절) ---
+    // 팝업이 없을 땐 플레이어 기본 단축키가 처리하므로 개입하지 않음 (중복 조절 방지)
     const setupKeyboardPassthrough = () => {
       document.addEventListener(
         "keydown",
         (e) => {
-          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-            const video = document.querySelector(
-              "video.webplayer-internal-video"
-            ) as HTMLVideoElement;
-            if (!video) return;
+          if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+          if (!document.querySelector(AD_BLOCK_POPUP)) return;
+          // 채팅/검색 입력 중의 방향키는 무시
+          const target = e.target as HTMLElement | null;
+          if (target?.closest?.("input, textarea, [contenteditable]")) return;
 
-            // 볼륨 직접 조절
-            const delta = e.key === "ArrowUp" ? 0.05 : -0.05;
-            video.volume = Math.max(0, Math.min(1, video.volume + delta));
-            console.log(
-              `[pzzk-tools] 볼륨 수동 조절: ${Math.round(video.volume * 100)}%`
-            );
-          }
+          const video = document.querySelector<HTMLVideoElement>(
+            "video.webplayer-internal-video"
+          );
+          if (!video) return;
+
+          const delta = e.key === "ArrowUp" ? 0.05 : -0.05;
+          video.volume = Math.max(0, Math.min(1, video.volume + delta));
         },
         true
       );
     };
 
     patchNetwork();
-    setupPopupHandler();
     setupKeyboardPassthrough();
   },
 });

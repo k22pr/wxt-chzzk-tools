@@ -2,6 +2,26 @@
  * content script에서 공통으로 사용하는 유틸리티 함수들
  */
 
+import { storage } from "wxt/utils/storage";
+import { STORAGE_KEY, DEFAULT_OPTIONS, type Options } from "@/constants";
+
+const OPTIONS_KEY = `local:${STORAGE_KEY}` as const;
+
+/** 저장된 옵션을 기본값과 병합해 반환합니다. (읽기 실패 시 기본값) */
+export async function getOptions(): Promise<Options> {
+  const saved = await storage
+    .getItem<Partial<Options>>(OPTIONS_KEY)
+    .catch(() => null);
+  return { ...DEFAULT_OPTIONS, ...saved };
+}
+
+/** 옵션 변경을 감시합니다. (기본값 병합) @returns unwatch 함수 */
+export function watchOptions(callback: (options: Options) => void) {
+  return storage.watch<Partial<Options>>(OPTIONS_KEY, (saved) =>
+    callback({ ...DEFAULT_OPTIONS, ...saved }),
+  );
+}
+
 export interface UrlWatcherOptions {
   /** URL 변경 시 호출되는 콜백. 새 path와 이전 path를 인자로 받음 */
   onPathChange: (newPath: string, oldPath: string) => void | Promise<void>;

@@ -3,8 +3,8 @@
  * VOD 및 라이브 플레이어의 컨트롤바 디자인을 프리미엄 스타일로 변경
  */
 
-import { storage } from "wxt/utils/storage";
-import { STORAGE_KEY } from "@/constants";
+import type { Options } from "@/constants";
+import { getOptions, watchOptions } from "@/utils/content-helpers";
 
 const NAME = "[pzzk-tools][video-ui]";
 
@@ -100,14 +100,14 @@ const CSS = `
     bottom:100px;
   }
 
-  #live_player_layout:not(.pip_mode) [class*="vod_player_header_header__"],
-  #player_layout:not(.pip_mode) [class*="vod_player_header_header__"] {
+  #live_player_layout:not(.pip_mode) .player_header [class^="_header_"],
+  #player_layout:not(.pip_mode) .player_header [class^="_header_"] {
     margin-top:10px;
     margin-left:10px;
   }
 
-  #live_player_layout:not(.pip_mode) [class*="vod_player_header_title__"],
-  #player_layout:not(.pip_mode) [class*="vod_player_header_title__"] {
+  #live_player_layout:not(.pip_mode) .player_header [class^="_title_"],
+  #player_layout:not(.pip_mode) .player_header [class^="_title_"] {
     display:inline;
     flex:none;
     backdrop-filter: blur(6px) saturate(180%);
@@ -135,65 +135,26 @@ const CSS = `
 
 const STYLE_ID = "pzzk-tools-video-ui";
 
+function apply({ useVideoUI }: Options) {
+  const existing = document.getElementById(STYLE_ID);
+  if (!useVideoUI) {
+    existing?.remove();
+    return;
+  }
+  if (existing) return;
+  const style = document.createElement("style");
+  style.id = STYLE_ID;
+  style.textContent = CSS;
+  // document_start 시점엔 head가 없을 수 있으나 <html> 직속 style도 그대로 적용됨
+  (document.head || document.documentElement).appendChild(style);
+  console.log(NAME, "Premium Video UI styles injected");
+}
+
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   runAt: "document_start",
   async main() {
-    const injectStyles = () => {
-      if (document.getElementById(STYLE_ID)) return;
-      const style = document.createElement("style");
-      style.id = STYLE_ID;
-      style.textContent = CSS;
-      document.head
-        ? document.head.appendChild(style)
-        : document.documentElement.appendChild(style);
-      console.log(NAME, "Premium Video UI styles injected");
-    };
-
-    const removeStyles = () => {
-      const el = document.getElementById(STYLE_ID);
-      if (el) {
-        el.remove();
-        console.log(NAME, "Premium Video UI styles removed");
-      }
-    };
-
-    const checkAndApply = async () => {
-      try {
-        const saved = (await storage.getItem(`local:${STORAGE_KEY}`)) as {
-          useVideoUI?: boolean;
-        } | null;
-
-        if (saved?.useVideoUI !== false) {
-          injectStyles();
-        } else {
-          removeStyles();
-        }
-      } catch {
-        injectStyles(); // 기본값: 적용
-      }
-    };
-
-    // 초기 실행
-    await checkAndApply();
-
-    // DOM 변화 감지 (head가 뒤늦게 생성될 수 있음)
-    const observer = new MutationObserver(() => {
-      checkAndApply();
-    });
-
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-    });
-
-    // 설정 변경 감지
-    browser.storage.onChanged.addListener((changes) => {
-      const localKey = `local:${STORAGE_KEY}`;
-      const change = changes[localKey] || changes[STORAGE_KEY];
-      if (change) {
-        checkAndApply();
-      }
-    });
+    apply(await getOptions());
+    watchOptions(apply);
   },
 });

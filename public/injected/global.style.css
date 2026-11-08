@@ -88,11 +88,17 @@
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
 }
 
-body [class*="home_list_container__"] {
-  margin-top: 0px !important;
-  margin-bottom: 30px !important;
+/* 홈 배너 광고 영역 숨김 */
+section:has(> #home_banner) {
+  display: none !important;
 }
 
-body [class*="home_list_container__"]:has(#home_banner) {
+/* 광고 차단 안내 팝업 숨김 (확인 버튼은 isTrusted 클릭만 받으므로 닫지 않고 감춤) */
+div:has(> [data-nlog-area="ad_blocking_info_layer"]) {
   display: none !important;
+}
+/* 팝업이 건 스크롤 잠금(body overflow:hidden) 해제 */
+body:has([data-nlog-area="ad_blocking_info_layer"]) {
+  overflow: auto !important;
+  padding-right: 0 !important;
 }

@@ -1,16 +1,8 @@
 <script lang="ts" setup>
 // 기능 탭 컴포넌트
+import type { Options } from "@/constants";
 
-defineProps<{
-  options: {
-    useAutoQuality: boolean;
-    useLiveBar: boolean;
-    useVideoOverlay: boolean;
-    useAutoRefresh: boolean;
-    useVideoTime: boolean;
-    useThumbnailRefresh: boolean;
-  };
-}>();
+defineProps<{ options: Options }>();
 
 const emit = defineEmits<{
   (e: "update:options", value: any): void;
@@ -121,17 +113,11 @@ const emit = defineEmits<{
             </div>
           </div>
           <div>
-            <a-switch
-              :disabled="true"
-              :checked="options.useAutoQuality"
-              @update:checked="
-                emit('update:options', { ...options, useAutoQuality: $event })
-              "
-            />
+            <a-switch :disabled="true" :checked="false" />
           </div>
         </div>
       </div>
-      <div w="full" grid gap="2" mt="2">
+      <div w="full" grid gap="2" mt="2" relative>
         <div
           absolute
           top="0"
@@ -142,7 +128,7 @@ const emit = defineEmits<{
           items="center"
           justify="center"
         >
-          <div i="line-md-cancel"></div>
+          <div class="i-line-md-cancel" text="6"></div>
         </div>
         <div
           w="full"
@@ -159,13 +145,7 @@ const emit = defineEmits<{
             </div>
           </div>
           <div>
-            <a-switch
-              :disabled="true"
-              :checked="options.useLiveBar"
-              @update:checked="
-                emit('update:options', { ...options, useLiveBar: $event })
-              "
-            />
+            <a-switch :disabled="true" :checked="false" />
           </div>
         </div>
       </div>

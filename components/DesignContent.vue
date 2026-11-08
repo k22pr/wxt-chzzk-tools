@@ -1,15 +1,8 @@
 <script lang="ts" setup>
 // 모양 탭 컴포넌트
+import { SELECTOR, type Options } from "@/constants";
 
-const props = defineProps<{
-  options: {
-    useVideoUI: boolean;
-    useHideBanner: boolean;
-    useHideRecommend: boolean;
-    useSwapNav: boolean;
-    useThumbnailZoom: boolean;
-  };
-}>();
+const props = defineProps<{ options: Options }>();
 
 const emit = defineEmits<{
   (e: "update:options", value: any): void;
@@ -73,17 +66,11 @@ const highlightElement = async (selector: string, show: boolean) => {
 };
 
 const onBannerHover = (show: boolean) => {
-  highlightElement(
-    '[class*="home_list_container__"][class*="top_banner_container__"]',
-    show
-  );
+  highlightElement(SELECTOR.topBanner, show);
 };
 
 const onRecommendHover = (show: boolean) => {
-  highlightElement(
-    '[class*="home_list_container__"][class*="home_recommend_live_container__"]',
-    show
-  );
+  highlightElement(SELECTOR.recommendLive, show);
 };
 
 // 하이라이트 제거 함수
