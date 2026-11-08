@@ -182,8 +182,9 @@ const toggle = () => {
 };
 
 const openAt = (nx: number, ny: number) => {
-  // 같은 위치에서 다시 호출되면 닫기 (토글 동작)
-  if (show.value && x.value === nx && y.value === ny) {
+  // 열려 있을 때 버튼을 다시 누르면 닫기 (토글 동작)
+  // (이전엔 nx-100으로 저장한 값을 nx와 비교해 항상 false라 닫히지 않았음)
+  if (show.value) {
     show.value = false;
     return;
   }

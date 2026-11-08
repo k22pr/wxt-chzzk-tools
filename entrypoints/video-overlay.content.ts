@@ -40,7 +40,6 @@ export default defineContentScript({
       gain: number;
       filterGain: number;
       filterFrequency: number;
-      volume?: number;
       version?: number;
       expiresAt?: number;
     };
@@ -166,35 +165,6 @@ export default defineContentScript({
         passive: true,
       });
 
-      media.addEventListener("volumechange", () => {
-        const chain = audioChainMap.get(video);
-        if (!chain) return;
-
-        const c = chain.compressor;
-        const g = chain.gain;
-        const f = chain.filter;
-
-        // 비디오 볼륨 변경 시 AudioContext의 GainNode와 수동 동기화
-        // g.gain.value = media.volume;
-
-        const channelId = getChannelIdFromLocation();
-        if (!channelId) return;
-
-        const params: CompressorParams = {
-          threshold: c.threshold.value,
-          knee: c.knee.value,
-          ratio: c.ratio.value,
-          attack: c.attack.value,
-          release: c.release.value,
-          gain: g.gain.value,
-          filterGain: f.gain.value,
-          filterFrequency: f.frequency.value,
-          volume: media.volume,
-        };
-
-        saveParamsForChannel(channelId, params);
-      });
-
       if (initialParams) {
         compressor.threshold.value = initialParams.threshold;
         compressor.knee.value = initialParams.knee;
@@ -227,14 +197,8 @@ export default defineContentScript({
         setupAudioForVideo(video, savedParams ?? undefined);
       }, 500);
 
-      // 저장된 볼륨이 있으면 적용, 없으면 100%로 설정 후 음소거 해제
-      const media = video as HTMLMediaElement;
-      if (typeof savedParams?.volume === "number") {
-        media.volume = savedParams.volume;
-      } else {
-        media.volume = 1;
-      }
-      media.muted = false;
+      // 볼륨/음소거는 치지직 플레이어가 저장(localStorage player-volume)·적용하므로 건드리지 않음
+      // (video.volume을 직접 바꾸면 플레이어가 그 값을 다시 저장해 치지직 설정이 덮어써짐)
 
       if (!document.getElementById("pzzk-video-overlay-style")) {
         const style = document.createElement("style");
@@ -261,7 +225,6 @@ export default defineContentScript({
           const c = chain.compressor;
           const g = chain.gain;
           const f = chain.filter;
-          const media = video as HTMLMediaElement;
           return {
             threshold: c.threshold.value,
             knee: c.knee.value,
@@ -271,7 +234,6 @@ export default defineContentScript({
             gain: g.gain.value,
             filterGain: f.gain.value,
             filterFrequency: f.frequency.value,
-            volume: media.volume,
           };
         },
         setCompressorParams: (params: CompressorParams) => {
@@ -291,15 +253,7 @@ export default defineContentScript({
           f.gain.value = params.filterGain;
           f.frequency.value = params.filterFrequency;
 
-          // 저장 시점의 비디오 볼륨을 함께 저장
-          if (channelId) {
-            const media = video as HTMLMediaElement;
-            const payload: CompressorParams = {
-              ...params,
-              volume: media.volume,
-            };
-            saveParamsForChannel(channelId, payload);
-          }
+          if (channelId) saveParamsForChannel(channelId, params);
         },
         applyParamsOnly: (params: CompressorParams) => {
           const chain = audioChainMap.get(video);

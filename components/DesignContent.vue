@@ -33,8 +33,9 @@ const highlightElement = async (selector: string, show: boolean) => {
         const target = document.querySelector(sel) as HTMLElement;
         if (!target) return;
 
-        // 요소의 위치와 크기 가져오기
+        // 요소의 위치와 크기 가져오기 (이미 숨겨져 크기가 0이면 그리지 않음)
         const rect = target.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
         const scrollTop = window.scrollY || document.documentElement.scrollTop;
         const scrollLeft =
           window.scrollX || document.documentElement.scrollLeft;
@@ -57,6 +58,12 @@ const highlightElement = async (selector: string, show: boolean) => {
           transition: all 0.2s ease;
         `;
         document.body.appendChild(overlay);
+        // hover 중 팝업이 Esc 등으로 닫히면 mouseleave가 오지 않으므로,
+        // 포인터가 페이지 위에서 움직이는 순간(=팝업 밖) 스스로 제거
+        document.addEventListener("pointermove", () => overlay.remove(), {
+          once: true,
+          capture: true,
+        });
       },
       args: [selector, show, HIGHLIGHT_ID],
     });
