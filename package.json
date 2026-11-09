@@ -2,7 +2,7 @@
   "name": "pzzk-tools",
   "description": "라이브 스트리밍 방송 시청과 관련된 유틸리티를 제공하는 브라우저 확장 프로그램입니다.",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
