@@ -1,8 +1,20 @@
+import { storage } from "wxt/utils/storage";
+import { STORAGE_KEY } from "@/constants";
+
 // Mac User-Agent (Opera 브라우저로 위장)
 const SPOOFED_USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6937.97 Safari/537.36 OPR/115.0.5231.193";
 
 export default defineBackground(() => {
+  // 저장 키 이름 변경(pzzk-tools → chzzk-tools): 업데이트 시 기존 옵션을 새 키로 옮긴다.
+  // 옛 chzzk 키에 오래된 값이 남아 있을 수 있으므로 pzzk 값으로 덮어쓴다.
+  browser.runtime.onInstalled.addListener(async () => {
+    const legacy = await storage.getItem("local:pzzk-tools:options");
+    if (!legacy) return;
+    await storage.setItem(`local:${STORAGE_KEY}`, legacy);
+    await storage.removeItem("local:pzzk-tools:options");
+  });
+
   // User-Agent 스푸핑 규칙 등록
   const setupUserAgentRule = async () => {
     try {
@@ -41,9 +53,9 @@ export default defineBackground(() => {
         ],
       });
 
-      console.log("[pzzk-tools] User-Agent spoofing rule registered");
+      console.log("[chzzk-tools] User-Agent spoofing rule registered");
     } catch (error) {
-      console.error("[pzzk-tools] Failed to register User-Agent rule:", error);
+      console.error("[chzzk-tools] Failed to register User-Agent rule:", error);
     }
   };
 

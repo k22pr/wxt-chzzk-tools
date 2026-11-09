@@ -6,7 +6,7 @@
 import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY } from "@/constants";
 
-const NAME = "[pzzk-tools][swap-nav]";
+const NAME = "[chzzk-tools][swap-nav]";
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],

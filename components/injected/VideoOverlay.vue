@@ -293,7 +293,7 @@ defineExpose({ openAt });
   <div
     v-if="show"
     ref="overlayRef"
-    class="pzzk-tools-comp-overlay"
+    class="chzzk-tools-comp-overlay"
     :style="{
       top: y + 'px',
       left: x + 'px',
@@ -357,7 +357,7 @@ defineExpose({ openAt });
           {{ slider.label }}
         </div>
         <Slider
-          class="pzzk-tools-range"
+          class="chzzk-tools-range"
           style="flex: 1; width: 100%"
           v-model="slider.value.value"
           :min="slider.min"

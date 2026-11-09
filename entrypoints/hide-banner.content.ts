@@ -6,7 +6,7 @@
 import { SELECTOR, type Options } from "@/constants";
 import { getOptions, watchOptions } from "@/utils/content-helpers";
 
-const STYLE_ID = "pzzk-tools-hide-banner";
+const STYLE_ID = "chzzk-tools-hide-banner";
 const PREVIEW_VIDEO = `${SELECTOR.recommendLive} video`;
 
 let hideRecommend = false;

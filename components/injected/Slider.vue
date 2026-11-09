@@ -72,17 +72,17 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    class="pzzk-tools-slider"
+    class="chzzk-tools-slider"
     ref="trackRef"
     @mousedown.prevent="onPointerDown"
   >
-    <div class="pzzk-tools-slider__track"></div>
+    <div class="chzzk-tools-slider__track"></div>
     <div
-      class="pzzk-tools-slider__fill"
+      class="chzzk-tools-slider__fill"
       :style="{ width: percent + '%' }"
     ></div>
     <div
-      class="pzzk-tools-slider__thumb"
+      class="chzzk-tools-slider__thumb"
       :style="{ left: percent + '%' }"
     ></div>
   </div>

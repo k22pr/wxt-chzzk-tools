@@ -25,7 +25,7 @@ export default defineContentScript({
     document.addEventListener(
       "pointerdown",
       (e) => {
-        pressedInOverlay = !!(e.target as Element | null)?.closest?.(".pzzk-tools-comp-overlay");
+        pressedInOverlay = !!(e.target as Element | null)?.closest?.(".chzzk-tools-comp-overlay");
       },
       true
     );
@@ -58,7 +58,22 @@ export default defineContentScript({
       expiresAt?: number;
     };
 
-    const STORAGE_KEY_PREFIX = "pzzk-tools-comp:";
+    const STORAGE_KEY_PREFIX = "chzzk-tools-comp:";
+    // 이전 키(pzzk-tools-comp:)로 저장된 채널별 설정을 새 키로 옮긴다
+    const LEGACY_PREFIX = "pzzk-tools-comp:";
+    try {
+      for (const key of Object.keys(window.localStorage)) {
+        if (!key.startsWith(LEGACY_PREFIX)) continue;
+        const channelId = key.slice(LEGACY_PREFIX.length);
+        window.localStorage.setItem(
+          STORAGE_KEY_PREFIX + channelId,
+          window.localStorage.getItem(key)!,
+        );
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      // ignore
+    }
     const STORAGE_VERSION = 1;
     // 기본 유효기간: 30일 (ms)
     const STORAGE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
@@ -336,7 +351,7 @@ export default defineContentScript({
       // 툴팁(플레이어의 pzp-button__tooltip 스타일) + 아이콘
       container.innerHTML =
         '<span class="pzp-button__tooltip pzp-button__tooltip--top">Compressor</span>' +
-        '<span title="Pzzk Tools"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14">' +
+        '<span title="Chzzk Tools"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14">' +
         '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1 5.5v3M4 3v8M7 .5v13M10 3v8m3-5.5v3"/>' +
         "</svg></span>";
     }

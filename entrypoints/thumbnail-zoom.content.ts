@@ -5,8 +5,8 @@
 
 import { getOptions } from "@/utils/content-helpers";
 
-const NAME = "[pzzk-tools][thumbnail-zoom]";
-const STYLE_ID = "pzzk-tools-thumbnail-zoom";
+const NAME = "[chzzk-tools][thumbnail-zoom]";
+const STYLE_ID = "chzzk-tools-thumbnail-zoom";
 // 공용 비디오 카드(세로/가로형)의 썸네일 링크: <div class="_container_… _vertical_…"><a class="_thumbnail_…">
 const THUMBNAIL_SELECTOR =
   ':is([class*=" _vertical_"], [class*=" _horizontal_"]) > a[class^="_thumbnail_"]';

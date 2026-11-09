@@ -1,4 +1,4 @@
-export const STORAGE_KEY = "pzzk-tools:options";
+export const STORAGE_KEY = "chzzk-tools:options";
 
 // 팝업과 모든 content script가 공유하는 옵션 기본값 (저장값이 없거나 일부 키가 빠졌을 때 사용)
 export const DEFAULT_OPTIONS = {

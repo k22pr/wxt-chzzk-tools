@@ -34,7 +34,7 @@ export default defineContentScript({
     };
     subtle.decrypt = (algorithm, key, data) => {
       if (!adFlagKeys.has(key)) return decrypt(algorithm, key, data);
-      console.log("[pzzk-tools] 광고 표시 플래그 차단됨");
+      console.log("[chzzk-tools] 광고 표시 플래그 차단됨");
       return Promise.resolve(new TextEncoder().encode(NO_ADS).buffer as ArrayBuffer);
     };
 
@@ -44,7 +44,7 @@ export default defineContentScript({
       const url =
         typeof input === "string" ? input : (input as Request).url || "";
       if (url.includes("ad-polling") || url.includes("ad-video-info")) {
-        console.log("[pzzk-tools] 광고 감지 API 차단됨:", url);
+        console.log("[chzzk-tools] 광고 감지 API 차단됨:", url);
         return Promise.resolve(
           new Response(
             JSON.stringify({
@@ -71,7 +71,7 @@ export default defineContentScript({
     const originalSend = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.send = function () {
       if ((this as any)._isAdPolling) {
-        console.log("[pzzk-tools] XHR 광고 요청 차단됨");
+        console.log("[chzzk-tools] XHR 광고 요청 차단됨");
         Object.defineProperty(this, "status", { value: 200 });
         Object.defineProperty(this, "responseText", {
           value: JSON.stringify({

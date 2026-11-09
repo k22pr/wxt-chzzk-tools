@@ -9,7 +9,7 @@ const emit = defineEmits<{
 }>();
 
 // 요소 하이라이트 기능 - 대상 영역에 outline 스타일을 주입
-const HIGHLIGHT_ID = "pzzk-tools-highlight-overlay";
+const HIGHLIGHT_ID = "chzzk-tools-highlight-overlay";
 
 const highlightElement = async (selector: string, show: boolean) => {
   try {

@@ -113,7 +113,7 @@ const CSS = `
   }
 `;
 
-const STYLE_ID = "pzzk-tools-video-ui";
+const STYLE_ID = "chzzk-tools-video-ui";
 
 function apply({ useVideoUI }: Options) {
   const existing = document.getElementById(STYLE_ID);

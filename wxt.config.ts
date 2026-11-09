@@ -7,7 +7,7 @@ export default defineConfig({
     excludeEntrypoints: ["background"],
   },
   manifest: {
-    name: "파직툴 - 라이브 스트리밍 도구",
+    name: "치직툴 - 라이브 스트리밍 도구",
     // scripting: 팝업 '모양' 탭에서 숨길 영역을 페이지에 하이라이트할 때 사용
     permissions: ["storage", "declarativeNetRequest", "scripting"],
     host_permissions: [
