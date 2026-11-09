@@ -22,38 +22,33 @@ const CSS = `
      치지직 규칙이 :not()을 여러 개 붙여 우선순위가 높아 !important 필요 */
   ${NAME_BOX} { margin-right: 0 !important; }
 
+  /* :has()는 채팅 행이 추가될 때마다 넓은 범위의 스타일 재계산을 일으켜 쓰지 않음 */
+
+  /* 배지 칸: 배지 하나 크기의 2x2 그리드 (5개 이상이면 앞의 4개만 보임) */
   ${NAME_BOX} > [class*="_wrapper_"] {
+    --chat-align-cell: calc((var(--chat-align-icon) - 2px) / 2);
     flex: none;
+    display: grid;
+    grid-template-columns: repeat(2, var(--chat-align-cell));
+    grid-auto-rows: var(--chat-align-cell);
+    gap: 2px;
     width: var(--chat-align-icon);
     height: var(--chat-align-icon);
     margin-right: var(--chat-align-gap);
     overflow: hidden;
   }
-
-  /* 배지가 없으면 배지 하나만큼 빈 자리 */
-  ${NAME_BOX}:not(:has(> [class*="_wrapper_"]))::before {
-    content: "";
-    flex: none;
-    width: var(--chat-align-icon);
-    height: var(--chat-align-icon);
-    margin-right: var(--chat-align-gap);
+  /* 배지 1개: 2x2 전체를 차지해 원래 크기 그대로 */
+  ${NAME_BOX} > [class*="_wrapper_"] > :only-child {
+    grid-column: 1 / -1;
+    grid-row: span 2;
   }
-
-  /* 배지가 2개 이상이면 배지 하나 크기 안에 2x2로 작게 (5개 이상이면 앞의 4개만 보임) */
-  ${NAME_BOX} > [class*="_wrapper_"]:has(> :nth-child(2)) {
-    --chat-align-cell: calc((var(--chat-align-icon) - 2px) / 2);
-    display: grid;
-    grid-template-columns: repeat(2, var(--chat-align-cell));
-    grid-auto-rows: var(--chat-align-cell);
-    gap: 2px;
-  }
-  /* 아이콘 칸에는 인라인 style로 크기가 지정돼 있어 !important 필요 */
-  ${NAME_BOX} > [class*="_wrapper_"]:has(> :nth-child(2)) > * {
+  /* 배지 2개 이상: 한 칸씩 작게. 아이콘 칸에는 인라인 style로 크기가 지정돼 있어 !important 필요 */
+  ${NAME_BOX} > [class*="_wrapper_"] > :not(:only-child) {
     width: var(--chat-align-cell) !important;
     height: var(--chat-align-cell) !important;
     margin: 0;
   }
-  ${NAME_BOX} > [class*="_wrapper_"]:has(> :nth-child(2)) > * * {
+  ${NAME_BOX} > [class*="_wrapper_"] > :not(:only-child) * {
     display: block;
     width: 100%;
     height: 100%;
@@ -65,6 +60,10 @@ const CSS = `
     max-width: 80px;
     /* 치지직은 배지가 있을 때만 닉네임에 1px 여백을 줘서, 배지 유무와 관계없이 같게 맞춤 */
     margin-left: 0;
+  }
+  /* 배지가 없으면 닉네임이 첫 자식이 되므로 배지 하나만큼 비워 둠 */
+  ${NAME_BOX} > [class*="_nickname_"]:first-child {
+    margin-left: calc(var(--chat-align-icon) + var(--chat-align-gap));
   }
 `;
 
