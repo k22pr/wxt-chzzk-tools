@@ -102,6 +102,24 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+    <div w="full" grid gap="2">
+      <div w="full" flex items="top" justify="between">
+        <div w="full">
+          <div text="4">채팅창 정렬</div>
+          <div text="3 gray-5">
+            배지·닉네임 폭을 고정해 채팅 내용의 시작 위치를 맞춥니다.
+          </div>
+        </div>
+        <div>
+          <a-switch
+            :checked="options.useChatAlign"
+            @update:checked="
+              emit('update:options', { ...options, useChatAlign: $event })
+            "
+          />
+        </div>
+      </div>
+    </div>
     <a-tooltip placement="top" title="치지직 정책으로 인해 사용할 수 없습니다.">
       <div w="full" grid gap="2" relative>
         <div

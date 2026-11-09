@@ -8,6 +8,7 @@ export const DEFAULT_OPTIONS = {
   useAutoRefresh: true,
   useVideoTime: true,
   useThumbnailRefresh: true,
+  useChatAlign: false,
   useVideoUI: false,
   useHideBanner: false,
   useHideRecommend: false,
