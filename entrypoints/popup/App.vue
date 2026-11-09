@@ -5,20 +5,6 @@ import OptionContent from "@/components/OptionContent.vue";
 import packageJson from "../../package.json";
 
 const version = packageJson.version;
-
-onMounted(() => {
-  // document.addEventListener("contextmenu", function (event) {
-  //   event.preventDefault();
-  // });
-
-  document.addEventListener("copy", function (event) {
-    event.preventDefault();
-  });
-
-  document.addEventListener("selectstart", function (event) {
-    event.preventDefault();
-  });
-});
 </script>
 
 <template>
@@ -42,7 +28,6 @@ onMounted(() => {
         <OptionContent />
       </div>
     </div>
-    <!-- </a-watermark> -->
   </a-config-provider>
 </template>
 

@@ -2,13 +2,13 @@
 // 모양 탭 컴포넌트
 import { SELECTOR, type Options } from "@/constants";
 
-const props = defineProps<{ options: Options }>();
+defineProps<{ options: Options }>();
 
 const emit = defineEmits<{
   (e: "update:options", value: any): void;
 }>();
 
-// 요소 하이라이트 기능 - absolute div 오버레이 사용
+// 요소 하이라이트 기능 - 대상 영역에 outline 스타일을 주입
 const HIGHLIGHT_ID = "pzzk-tools-highlight-overlay";
 
 const highlightElement = async (selector: string, show: boolean) => {
@@ -22,45 +22,21 @@ const highlightElement = async (selector: string, show: boolean) => {
 
     await browser.scripting.executeScript({
       target: { tabId },
-      func: (sel: string, shouldShow: boolean, overlayId: string) => {
+      func: (sel: string, shouldShow: boolean, styleId: string) => {
         // 기존 하이라이트 제거
-        const existing = document.getElementById(overlayId);
-        if (existing) existing.remove();
-
+        document.getElementById(styleId)?.remove();
         if (!shouldShow) return;
 
-        // 대상 요소 찾기
-        const target = document.querySelector(sel) as HTMLElement;
-        if (!target) return;
-
-        // 요소의 위치와 크기 가져오기 (이미 숨겨져 크기가 0이면 그리지 않음)
-        const rect = target.getBoundingClientRect();
-        if (!rect.width || !rect.height) return;
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-        const scrollLeft =
-          window.scrollX || document.documentElement.scrollLeft;
-
-        // 하이라이트 오버레이 생성
-        const overlay = document.createElement("div");
-        overlay.id = overlayId;
-        overlay.style.cssText = `
-          position: absolute;
-          top: ${rect.top + scrollTop}px;
-          left: ${rect.left + scrollLeft}px;
-          width: ${rect.width}px;
-          height: ${rect.height}px;
-          border: 3px solid #ff4444;
-          background: rgba(255, 68, 68, 0.1);
-          pointer-events: none;
-          z-index: 999999;
-          box-sizing: border-box;
-          border-radius: 8px;
-          transition: all 0.2s ease;
-        `;
-        document.body.appendChild(overlay);
+        // 위치를 계산하지 않고 대상에 outline을 그림: 스크롤·레이아웃 변화는 브라우저가 따라가고,
+        // 이미 숨겨진(display:none) 영역이나 숨김을 켠 직후에는 그려지지 않음
+        // (안쪽으로 그리면 추천 라이브의 영상 카드가 덮으므로 바깥쪽에 그림)
+        const style = document.createElement("style");
+        style.id = styleId;
+        style.textContent = `${sel} { outline: 3px solid #ff4444 !important; outline-offset: 2px !important; }`;
+        document.head.appendChild(style);
         // hover 중 팝업이 Esc 등으로 닫히면 mouseleave가 오지 않으므로,
         // 포인터가 페이지 위에서 움직이는 순간(=팝업 밖) 스스로 제거
-        document.addEventListener("pointermove", () => overlay.remove(), {
+        document.addEventListener("pointermove", () => style.remove(), {
           once: true,
           capture: true,
         });
@@ -78,38 +54,6 @@ const onBannerHover = (show: boolean) => {
 
 const onRecommendHover = (show: boolean) => {
   highlightElement(SELECTOR.recommendLive, show);
-};
-
-// 하이라이트 제거 함수
-const removeHighlight = async () => {
-  try {
-    const tabs = await browser.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    const tabId = tabs[0]?.id;
-    if (!tabId) return;
-
-    await browser.scripting.executeScript({
-      target: { tabId },
-      func: (overlayId: string) => {
-        const existing = document.getElementById(overlayId);
-        if (existing) existing.remove();
-      },
-      args: [HIGHLIGHT_ID],
-    });
-  } catch {}
-};
-
-// 스위치 변경 핸들러
-const onBannerChange = (value: boolean) => {
-  emit("update:options", { ...props.options, useHideBanner: value });
-  if (value) removeHighlight();
-};
-
-const onRecommendChange = (value: boolean) => {
-  emit("update:options", { ...props.options, useHideRecommend: value });
-  if (value) removeHighlight();
 };
 </script>
 
@@ -163,7 +107,9 @@ const onRecommendChange = (value: boolean) => {
         <div>
           <a-switch
             :checked="options.useHideBanner"
-            @update:checked="onBannerChange"
+            @update:checked="
+              emit('update:options', { ...options, useHideBanner: $event })
+            "
           />
         </div>
       </div>
@@ -184,7 +130,9 @@ const onRecommendChange = (value: boolean) => {
         <div>
           <a-switch
             :checked="options.useHideRecommend"
-            @update:checked="onRecommendChange"
+            @update:checked="
+              emit('update:options', { ...options, useHideRecommend: $event })
+            "
           />
         </div>
       </div>

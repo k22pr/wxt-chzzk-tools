@@ -15,12 +15,6 @@ export default defineConfig({
       "https://api.chzzk.naver.com/*",
       "https://apis.naver.com/*",
     ],
-    web_accessible_resources: [
-      {
-        resources: ["injected/global.style.css"],
-        matches: ["https://chzzk.naver.com/*"],
-      },
-    ],
   },
   webExt: {
     startUrls: [

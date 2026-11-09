@@ -1,13 +1,11 @@
-import { createApp, ComponentPublicInstance } from "vue";
+import { createApp } from "vue";
 import VideoOverlay from "@/components/injected/VideoOverlay.vue";
-import ControlBarButton from "@/components/injected/ControlBarButton.vue";
 import { getOptions, observeElement } from "@/utils/content-helpers";
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
-  cssInjectionMode: "ui",
 
-  async main(ctx) {
+  async main() {
     if (!(await getOptions()).useVideoOverlay) return;
 
     const VIDEO_SELECTOR = "video.webplayer-internal-video";
@@ -113,6 +111,27 @@ export default defineContentScript({
       }
     }
 
+    // 컴프레서·게인·필터 노드에 파라미터를 적용
+    function applyParams(
+      nodes: {
+        compressor: DynamicsCompressorNode;
+        gain: GainNode;
+        filter: BiquadFilterNode;
+      },
+      params: CompressorParams
+    ) {
+      const { compressor, gain, filter } = nodes;
+      compressor.threshold.value = params.threshold;
+      compressor.knee.value = params.knee;
+      compressor.ratio.value = params.ratio;
+      compressor.attack.value = params.attack;
+      compressor.release.value = params.release;
+
+      gain.gain.value = params.gain;
+      filter.gain.value = params.filterGain;
+      filter.frequency.value = params.filterFrequency;
+    }
+
     function setupAudioForVideo(
       video: Element,
       initialParams?: CompressorParams | null
@@ -165,17 +184,7 @@ export default defineContentScript({
         passive: true,
       });
 
-      if (initialParams) {
-        compressor.threshold.value = initialParams.threshold;
-        compressor.knee.value = initialParams.knee;
-        compressor.ratio.value = initialParams.ratio;
-        compressor.attack.value = initialParams.attack;
-        compressor.release.value = initialParams.release;
-
-        gain.gain.value = initialParams.gain;
-        filter.gain.value = initialParams.filterGain;
-        filter.frequency.value = initialParams.filterFrequency;
-      }
+      if (initialParams) applyParams({ compressor, gain, filter }, initialParams);
 
       audioChainMap.set(video, { context, source, filter, compressor, gain });
     }
@@ -199,12 +208,6 @@ export default defineContentScript({
 
       // 볼륨/음소거는 치지직 플레이어가 저장(localStorage player-volume)·적용하므로 건드리지 않음
       // (video.volume을 직접 바꾸면 플레이어가 그 값을 다시 저장해 치지직 설정이 덮어써짐)
-
-      if (!document.getElementById("pzzk-video-overlay-style")) {
-        const style = document.createElement("style");
-        style.id = "pzzk-video-overlay-style";
-        document.head.appendChild(style);
-      }
 
       // 1. 오버레이를 일반 DOM에 직접 주입
       const container = document.createElement("div");
@@ -239,38 +242,12 @@ export default defineContentScript({
         setCompressorParams: (params: CompressorParams) => {
           const chain = audioChainMap.get(video);
           if (!chain) return;
-          const c = chain.compressor;
-          const g = chain.gain;
-          const f = chain.filter;
-
-          c.threshold.value = params.threshold;
-          c.knee.value = params.knee;
-          c.ratio.value = params.ratio;
-          c.attack.value = params.attack;
-          c.release.value = params.release;
-
-          g.gain.value = params.gain;
-          f.gain.value = params.filterGain;
-          f.frequency.value = params.filterFrequency;
-
+          applyParams(chain, params);
           if (channelId) saveParamsForChannel(channelId, params);
         },
         applyParamsOnly: (params: CompressorParams) => {
           const chain = audioChainMap.get(video);
-          if (!chain) return;
-          const c = chain.compressor;
-          const g = chain.gain;
-          const f = chain.filter;
-
-          c.threshold.value = params.threshold;
-          c.knee.value = params.knee;
-          c.ratio.value = params.ratio;
-          c.attack.value = params.attack;
-          c.release.value = params.release;
-
-          g.gain.value = params.gain;
-          f.gain.value = params.filterGain;
-          f.frequency.value = params.filterFrequency;
+          if (chain) applyParams(chain, params);
         },
         clearStoredParams: () => {
           if (!channelId) return;
@@ -328,21 +305,21 @@ export default defineContentScript({
         const overlayInstance = overlayMap.get(video) as any;
         if (!overlayInstance) return;
 
-        const videoElement = video as HTMLElement;
-        const videoRect = videoElement.getBoundingClientRect();
+        const videoRect = video.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
 
         const x =
           containerRect.left + containerRect.width / 2 - videoRect.left;
         const y = containerRect.top - videoRect.top;
 
-        if (typeof overlayInstance.openAt === "function") {
-          overlayInstance.openAt(x, y);
-        } else if (typeof overlayInstance.toggle === "function") {
-          overlayInstance.toggle();
-        }
+        overlayInstance.openAt(x, y);
       });
-      createApp(ControlBarButton).mount(container);
+      // 툴팁(플레이어의 pzp-button__tooltip 스타일) + 아이콘
+      container.innerHTML =
+        '<span class="pzp-button__tooltip pzp-button__tooltip--top">Compressor</span>' +
+        '<span title="Pzzk Tools"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14">' +
+        '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1 5.5v3M4 3v8M7 .5v13M10 3v8m3-5.5v3"/>' +
+        "</svg></span>";
     }
 
     // 비디오 요소 감지 및 마운트

@@ -174,13 +174,6 @@ const syncParamsFromAudio = () => {
   initialParams.value = { ...params };
 };
 
-const toggle = () => {
-  show.value = !show.value;
-  if (show.value) {
-    syncParamsFromAudio();
-  }
-};
-
 const openAt = (nx: number, ny: number) => {
   // 열려 있을 때 버튼을 다시 누르면 닫기 (토글 동작)
   // (이전엔 nx-100으로 저장한 값을 nx와 비교해 항상 false라 닫히지 않았음)
@@ -283,7 +276,7 @@ onBeforeUnmount(() => {
 });
 
 // 외부에서 제어할 수 있도록 expose
-defineExpose({ toggle, openAt });
+defineExpose({ openAt });
 </script>
 
 <template>
@@ -369,54 +362,3 @@ defineExpose({ toggle, openAt });
     </div>
   </div>
 </template>
-
-<style scoped>
-.chzzk-overlay {
-  position: absolute;
-  z-index: 9999;
-  background: rgba(25, 25, 28, 0.8);
-  color: white;
-  padding: 10px;
-  border-radius: 8px;
-  pointer-events: auto;
-  min-width: 200px;
-  box-shadow: 0 0px 20px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(8px);
-}
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-}
-.slider-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-.slider-row div {
-  white-space: nowrap;
-}
-.slider-row input[type="range"] {
-  flex: 1;
-}
-.slider-row .value {
-  width: 40px;
-  text-align: right;
-}
-.reset-button {
-  margin-top: 8px;
-  align-self: flex-end;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid hsla(0, 0%, 100%, 0.3);
-  background: transparent;
-  color: hsla(0, 0%, 100%, 0.7);
-  font-size: 11px;
-  cursor: pointer;
-}
-.reset-button:hover {
-  background: hsla(0, 0%, 100%, 0.08);
-}
-</style>

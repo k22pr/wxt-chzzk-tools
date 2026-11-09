@@ -7,11 +7,9 @@ import { STORAGE_KEY, DEFAULT_OPTIONS, type Options } from "@/constants";
 
 const OPTIONS_KEY = `local:${STORAGE_KEY}` as const;
 
-/** 저장된 옵션을 기본값과 병합해 반환합니다. (읽기 실패 시 기본값) */
+/** 저장된 옵션을 기본값과 병합해 반환합니다. */
 export async function getOptions(): Promise<Options> {
-  const saved = await storage
-    .getItem<Partial<Options>>(OPTIONS_KEY)
-    .catch(() => null);
+  const saved = await storage.getItem<Partial<Options>>(OPTIONS_KEY);
   return { ...DEFAULT_OPTIONS, ...saved };
 }
 
@@ -121,102 +119,4 @@ export function observeElement(options: ElementObserverOptions): () => void {
   return () => {
     observer.disconnect();
   };
-}
-
-export interface WaitForElementOptions {
-  /** 찾을 CSS 선택자 */
-  selector: string;
-  /** 타임아웃 (ms), 기본값 10000 (10초) */
-  timeout?: number;
-  /** 관찰할 루트 요소, 기본값 document */
-  root?: Element | Document;
-}
-
-/**
- * 특정 요소가 DOM에 나타날 때까지 기다립니다.
- * 이미 존재하면 즉시 resolve됩니다.
- *
- * @returns Promise<Element>
- */
-export function waitForElement(
-  options: WaitForElementOptions
-): Promise<Element> {
-  const { selector, timeout = 10000, root = document } = options;
-
-  return new Promise((resolve, reject) => {
-    // 이미 존재하는지 확인
-    const existing = (root as Document).querySelector(selector);
-    if (existing) {
-      resolve(existing);
-      return;
-    }
-
-    let observer: MutationObserver | null = null;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    const cleanup = () => {
-      if (observer) observer.disconnect();
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-
-    observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
-          if (node.nodeType !== Node.ELEMENT_NODE) continue;
-          const el = node as Element;
-          if (el.matches?.(selector)) {
-            cleanup();
-            resolve(el);
-            return;
-          }
-          const found = el.querySelector?.(selector);
-          if (found) {
-            cleanup();
-            resolve(found);
-            return;
-          }
-        }
-      }
-    });
-
-    observer.observe(root, { childList: true, subtree: true });
-
-    timeoutId = setTimeout(() => {
-      cleanup();
-      reject(new Error(`waitForElement timeout: ${selector}`));
-    }, timeout);
-  });
-}
-
-/**
- * DOMContentLoaded를 기다리거나, 이미 로드되었으면 즉시 실행합니다.
- */
-export function onDOMReady(callback: () => void): void {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", callback, { once: true });
-  } else {
-    callback();
-  }
-}
-
-/**
- * 비디오 페이지 여부를 확인합니다.
- */
-export function isVideoPage(): boolean {
-  return location.pathname.startsWith("/video/");
-}
-
-/**
- * 라이브 페이지 여부를 확인합니다.
- */
-export function isLivePage(): boolean {
-  return location.pathname.startsWith("/live/");
-}
-
-/**
- * 현재 페이지에서 비디오/채널 ID를 추출합니다.
- */
-export function getIdFromPath(): string | null {
-  const match = location.pathname.match(/\/(live|video)\/([^/?#]+)/);
-  return match ? match[2] : null;
 }

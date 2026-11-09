@@ -6,11 +6,8 @@
 import type { Options } from "@/constants";
 import { getOptions, watchOptions } from "@/utils/content-helpers";
 
-const NAME = "[pzzk-tools][video-ui]";
-
 const CSS = `
-  #live_player_layout:not(.pip_mode) .pzp-pc .pzp-pc__bottom,
-  #player_layout:not(.pip_mode) .pzp-pc .pzp-pc__bottom {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc .pzp-pc__bottom {
     transition: background 0.3s, backdrop-filter 0.3s, width 0.3s;
     height: auto;
     padding: 25px 10px 10px 10px;
@@ -25,89 +22,70 @@ const CSS = `
     transition: 0.3s;
   }
 
-  :fullscreen .pzp-pc .pzp-pc__bottom,
-  :-webkit-full-screen .pzp-pc .pzp-pc__bottom {
+  :fullscreen .pzp-pc .pzp-pc__bottom {
     min-width: 800px !important;
     padding: 35px 10px 10px 10px !important;
   }
 
-  #live_player_layout:not(.pip_mode) .pzp-pc--controls .pzp-pc__bottom,
-  #player_layout:not(.pip_mode) .pzp-pc--controls .pzp-pc__bottom,
-  :fullscreen .pzp-pc--controls .pzp-pc__bottom,
-  :-webkit-full-screen .pzp-pc--controls .pzp-pc__bottom {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc--controls .pzp-pc__bottom,
+  :fullscreen .pzp-pc--controls .pzp-pc__bottom {
     backdrop-filter: blur(8px) saturate(60%);
     background: rgba(15, 17, 19, 0.6);
     border: 1px solid rgba(255,255,255,0.1);
     box-shadow:0px 0px 30px rgba(0,0,0,0.6);
   }
 
-  #live_player_layout:not(.pip_mode) .pzp-pc .pzp-pc__progress-slider .pzp-ui-slider__wrap,
-  #player_layout:not(.pip_mode) .pzp-pc .pzp-pc__progress-slider .pzp-ui-slider__wrap,
-  :fullscreen .pzp-pc .pzp-pc__progress-slider .pzp-ui-slider__wrap,
-  :-webkit-full-screen .pzp-pc .pzp-pc__progress-slider .pzp-ui-slider__wrap {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc .pzp-pc__progress-slider .pzp-ui-slider__wrap,
+  :fullscreen .pzp-pc .pzp-pc__progress-slider .pzp-ui-slider__wrap {
     position:relative;
     width:calc(100% - 20px);
     left:10px;
   }
 
-  #live_player_layout:not(.pip_mode) .pzp-pc .pzp-pc__progress-slider,
-  #player_layout:not(.pip_mode) .pzp-pc .pzp-pc__progress-slider {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc .pzp-pc__progress-slider {
     bottom: 55px;
     border-radius: 10px;
     width:calc(100% - 20px);
     left:10px;
   }
 
-  :fullscreen .pzp-pc .pzp-pc__progress-slider,
-  :-webkit-full-screen .pzp-pc .pzp-pc__progress-slider {
+  :fullscreen .pzp-pc .pzp-pc__progress-slider {
     bottom: 60px !important;
   }
 
-  #live_player_layout:not(.pip_mode) .pzp-pc .live-bar-box,
-  #player_layout:not(.pip_mode) .pzp-pc .live-bar-box,
-  :fullscreen .pzp-pc .live-bar-box,
-  :-webkit-full-screen .pzp-pc .live-bar-box {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc .live-bar-box,
+  :fullscreen .pzp-pc .live-bar-box {
     bottom: 45px !important;
   }
 
-  #live_player_layout:not(.pip_mode) .pzp-pc .pzp-pc__volume-slider,
-  #player_layout:not(.pip_mode) .pzp-pc .pzp-pc__volume-slider,
-  :fullscreen .pzp-pc .pzp-pc__volume-slider,
-  :-webkit-full-screen .pzp-pc .pzp-pc__volume-slider {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc .pzp-pc__volume-slider,
+  :fullscreen .pzp-pc .pzp-pc__volume-slider {
     width:72px;
     margin-right:13px;
     overflow:visible;
   }
 
-  #live_player_layout:not(.pip_mode) .pzp-pc .pzp-ui-progress__div,
-  #player_layout:not(.pip_mode) .pzp-pc .pzp-ui-progress__div,
-  :fullscreen .pzp-pc .pzp-ui-progress__div,
-  :-webkit-full-screen .pzp-pc .pzp-ui-progress__div {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc .pzp-ui-progress__div,
+  :fullscreen .pzp-pc .pzp-ui-progress__div {
     border-radius: 10px;
   }
 
-  #live_player_layout:not(.pip_mode) .pzp-pc__bottom-buttons,
-  #player_layout:not(.pip_mode) .pzp-pc__bottom-buttons,
-  :fullscreen .pzp-pc__bottom-buttons,
-  :-webkit-full-screen .pzp-pc__bottom-buttons {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc__bottom-buttons,
+  :fullscreen .pzp-pc__bottom-buttons {
     margin-top:5px;
   }
 
-  #live_player_layout:not(.pip_mode) .pzp-pc .pzp-pc__seeking-preview,
-  #player_layout:not(.pip_mode) .pzp-pc .pzp-pc__seeking-preview,
-  :fullscreen .pzp-pc .pzp-pc__seeking-preview,
-  :-webkit-full-screen .pzp-pc .pzp-pc__seeking-preview {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc .pzp-pc__seeking-preview,
+  :fullscreen .pzp-pc .pzp-pc__seeking-preview {
     bottom:100px;
   }
 
-  #live_player_layout:not(.pip_mode) .player_header [class^="_header_"],
-  #player_layout:not(.pip_mode) .player_header [class^="_header_"] {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .player_header [class^="_header_"] {
     margin-top:10px;
     margin-left:10px;
   }
 
-  #live_player_layout:not(.pip_mode) .player_header [class^="_title_"],
-  #player_layout:not(.pip_mode) .player_header [class^="_title_"] {
+  :is(#live_player_layout, #player_layout):not(.pip_mode) .player_header [class^="_title_"] {
     display:inline;
     flex:none;
     backdrop-filter: blur(6px) saturate(180%);
@@ -147,7 +125,6 @@ function apply({ useVideoUI }: Options) {
   style.textContent = CSS;
   // document_start 시점엔 head가 없을 수 있으나 <html> 직속 style도 그대로 적용됨
   (document.head || document.documentElement).appendChild(style);
-  console.log(NAME, "Premium Video UI styles injected");
 }
 
 export default defineContentScript({

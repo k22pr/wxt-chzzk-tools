@@ -1,16 +1,10 @@
-import {
-  getOptions,
-  startUrlWatcher,
-  observeElement,
-  onDOMReady,
-  isVideoPage,
-} from "@/utils/content-helpers";
+import { getOptions } from "@/utils/content-helpers";
 
 const VIDEO_ELEMENT_NAME = "video.webplayer-internal-video";
 const QUALITY_ELEMENT_NAME = "li.pzp-ui-setting-quality-item";
 
-function pressEnterOnElement(el: HTMLElement | null | undefined) {
-  if (!el) return;
+// 플레이어 화질 메뉴 항목은 click만으로는 바뀌지 않고 Enter 키 입력을 받아야 전환됨
+function pressEnterOnElement(el: HTMLElement) {
   el.focus?.({ preventScroll: true });
   el.click();
   el.dispatchEvent(
@@ -29,203 +23,50 @@ function pressEnterOnElement(el: HTMLElement | null | undefined) {
   );
 }
 
-// setupAutoQuality returns a cleanup function
-async function setupAutoQuality() {
-  let qualityInterval: number | null = null;
-  let processed = false;
-  let observer: MutationObserver | null = null;
+// 라이브 채널 ID / VOD 번호 (그 외 페이지는 null)
+const contentId = () =>
+  location.pathname.match(/^\/(?:live|video)\/([^/?#]+)/)?.[1] ?? null;
 
-  async function tick() {
-    await new Promise<void>((r) =>
-      requestAnimationFrame(() => requestAnimationFrame(() => r()))
-    );
-
-    const videoEl =
-      document.querySelector<HTMLVideoElement>(VIDEO_ELEMENT_NAME);
-    const items = [
-      ...new Set([
-        ...document.querySelectorAll<HTMLLIElement>(QUALITY_ELEMENT_NAME),
-      ]),
-    ];
-    const target = items.find((li) => /1080p/.test(li.innerText));
-    if (!target) return false;
-
-    const isNowHighQuality = target.classList.contains(
-      "pzp-ui-setting-pane-item--checked"
-    );
-
-    if (!isNowHighQuality && !processed) {
-      pressEnterOnElement(target as unknown as HTMLElement);
-      videoEl?.play().catch(() => {});
-      processed = true;
+// 화질 목록이 준비되면(최대 3초) 최고 화질을 한 번 선택
+// 목록은 높은 화질부터 나열됨: 숫자로 시작하는 첫 항목이 최고 화질 (1080p가 없는 방송도 대응)
+// ("자동" 항목은 "자동 (720p)"처럼 현재 해상도를 포함하므로 숫자로 시작하는지로 구분)
+function selectTopQuality(video: HTMLVideoElement) {
+  const until = Date.now() + 3000;
+  const timer = setInterval(() => {
+    const top = [
+      ...document.querySelectorAll<HTMLLIElement>(QUALITY_ELEMENT_NAME),
+    ].find((li) => /^\s*\d+p/.test(li.textContent ?? ""));
+    if (!top && Date.now() < until) return;
+    clearInterval(timer);
+    if (!top || top.classList.contains("pzp-ui-setting-pane-item--checked"))
       return;
-    }
-
-    if (isNowHighQuality && videoEl && !videoEl.paused) {
-      stopQualityInterval();
-    }
-  }
-
-  function startQualityInterval() {
-    if (qualityInterval !== null) return;
-    qualityInterval = window.setInterval(tick, 100);
-  }
-
-  function stopQualityInterval() {
-    if (qualityInterval === null) return;
-    clearInterval(qualityInterval);
-    qualityInterval = null;
-  }
-
-  function restartQualityInterval() {
-    processed = false;
-    stopQualityInterval();
-    startQualityInterval();
-    window.setTimeout(stopQualityInterval, 3000);
-  }
-
-  const onKeydown = (e: KeyboardEvent) => {
-    if (e.altKey && e.key.toLowerCase() === "h") pressEnterOnElement(null);
-  };
-  window.addEventListener("keydown", onKeydown);
-
-  function tryMount() {
-    const videoElement =
-      document.querySelector<HTMLVideoElement>(VIDEO_ELEMENT_NAME);
-    if (!videoElement) return;
-
-    // 비디오가 이미 로드된 경우 즉시 실행
-    if (videoElement.readyState >= 1) {
-      void tick();
-      restartQualityInterval();
-    }
-
-    // 아직 로드되지 않은 경우 이벤트 리스너 등록
-    videoElement.addEventListener(
-      "loadedmetadata",
-      () => {
-        void tick();
-        restartQualityInterval();
-      },
-      { once: true }
-    );
-  }
-
-  onDOMReady(tryMount);
-
-  const cleanupObserver = observeElement({
-    selector: VIDEO_ELEMENT_NAME,
-    onElementAdded: () => tryMount(),
-  });
-
-  return () => {
-    stopQualityInterval();
-    window.removeEventListener("keydown", onKeydown);
-    cleanupObserver();
-  };
-}
-
-// setupPopupRemover returns a cleanup function
-function setupPopupRemover() {
-  return () => {};
+    pressEnterOnElement(top);
+    video.play().catch(() => {});
+  }, 100);
 }
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   runAt: "document_start",
   async main() {
-    // 치지직 정책으로 사용 중지 (팝업에서도 잠금): 예전에 켜 둔 저장값이 있어도 실행하지 않음
-    return;
-
     if (!(await getOptions()).useAutoQuality) return;
 
-    // 현재 정리 함수들
-    let cleanup: (() => void) | null = null;
-
-    // URL 변경 시 실행되는 콜백
-    const handlePathChange = async () => {
-      // 이전 상태 정리
-      if (cleanup) {
-        cleanup();
-        cleanup = null;
-      }
-
-      // 팝업 제거는 항상 실행 (페이지마다 재설정)
-      const cleanPopup = setupPopupRemover() || (() => {});
-
-      if (!isVideoPage()) {
-        // /live/* 페이지 등: 기본 실행
-        const cleanQuality = (await setupAutoQuality()) || (() => {});
-        cleanup = () => {
-          cleanQuality();
-          cleanPopup();
-        };
-        return;
-      }
-
-      // /video/* 페이지: "열심히 불러오는 중.." 문구가 사라지면 화질 자동 변경 실행
-      const LOADING_SELECTOR = '[class*="vod_chatting_text__"]';
-      let observer: MutationObserver | null = null;
-      let executed = false;
-      let loadingAppeared = false;
-      let cleanQuality: (() => void) | null = null;
-
-      // 비디오 숨기기/보이기
-      const hideVideo = () => {
-        const video =
-          document.querySelector<HTMLVideoElement>(VIDEO_ELEMENT_NAME);
-        if (video) video.style.opacity = "0";
-      };
-      const showVideo = () => {
-        const video =
-          document.querySelector<HTMLVideoElement>(VIDEO_ELEMENT_NAME);
-        if (video) video.style.opacity = "1";
-      };
-
-      const tryExecute = async () => {
-        if (executed) return;
-        executed = true;
-        cleanQuality = (await setupAutoQuality()) || (() => {});
-        setTimeout(showVideo, 300);
-      };
-
-      hideVideo();
-
-      observer = new MutationObserver(() => {
-        if (!executed) hideVideo();
-        const loadingElement = document.querySelector(LOADING_SELECTOR);
-        if (loadingElement && !loadingAppeared) loadingAppeared = true;
-        if (loadingAppeared && !loadingElement) {
-          observer?.disconnect();
-          tryExecute();
-        }
-      });
-
-      if (document.body) {
-        observer.observe(document.body, { childList: true, subtree: true });
-      }
-
-      const timeoutId = setTimeout(() => {
-        observer?.disconnect();
-        tryExecute();
-      }, 2000);
-
-      cleanup = () => {
-        observer?.disconnect();
-        clearTimeout(timeoutId);
-        showVideo();
-        cleanPopup();
-        if (cleanQuality) cleanQuality();
-      };
-    };
-
-    // URL 워처 시작 (공통 유틸리티 사용)
-    startUrlWatcher({
-      onPathChange: handlePathChange,
-      interval: 500,
-    });
-
-    // 초기 실행
-    handlePathChange();
+    // 새로 들어간 라이브/VOD가 처음 로드될 때만 적용
+    // (화질을 바꿔 다시 로드되거나, 소형 플레이어로 같은 방송을 이어 보는 동안에는 사용자 선택 유지)
+    let applied: string | null = null;
+    // media 이벤트는 버블링되지 않지만 캡처 단계에서는 document까지 전달됨
+    document.addEventListener(
+      "loadedmetadata",
+      (e) => {
+        const video = e.target;
+        const id = contentId();
+        if (!id || id === applied) return;
+        if (!(video instanceof HTMLVideoElement)) return;
+        if (!video.matches(VIDEO_ELEMENT_NAME)) return;
+        applied = id;
+        selectTopQuality(video);
+      },
+      true
+    );
   },
 });

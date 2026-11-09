@@ -34,10 +34,7 @@ export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   runAt: "document_idle",
   async main() {
-    if (!(await getOptions()).useThumbnailZoom) {
-      console.log(NAME, "Disabled by option");
-      return;
-    }
+    if (!(await getOptions()).useThumbnailZoom) return;
 
     // 스타일 삽입
     const injectStyle = () => {

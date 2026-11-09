@@ -12,27 +12,13 @@ let intervalId: ReturnType<typeof setInterval> | undefined;
  */
 function refreshAllThumbnails(): void {
   const now = String(Date.now());
-
-  document.querySelectorAll<HTMLImageElement>("img").forEach((img) => {
-    if (!img.src.includes(THUMB_HOST)) return;
-    try {
-      const url = new URL(img.src);
-      if (!url.searchParams.has("date")) return;
-      url.searchParams.set("date", now);
-      img.src = url.toString();
-    } catch {
-      // URL 파싱 오류 무시
-    }
-  });
-
-  document
-    .querySelectorAll("img[srcset], source[srcset]")
-    .forEach((el) => {
-      const srcset = el.getAttribute("srcset");
-      if (!srcset?.includes(THUMB_HOST)) return;
-      const updated = srcset.replace(/date=\d+/g, `date=${now}`);
-      if (updated !== srcset) el.setAttribute("srcset", updated);
+  for (const attr of ["src", "srcset"]) {
+    document.querySelectorAll(`[${attr}*="${THUMB_HOST}"]`).forEach((el) => {
+      const value = el.getAttribute(attr)!;
+      const updated = value.replace(/(?<=[?&]date=)\d+/g, now);
+      if (updated !== value) el.setAttribute(attr, updated);
     });
+  }
 }
 
 function apply({ useThumbnailRefresh }: Options) {

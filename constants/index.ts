@@ -2,8 +2,8 @@ export const STORAGE_KEY = "pzzk-tools:options";
 
 // 팝업과 모든 content script가 공유하는 옵션 기본값 (저장값이 없거나 일부 키가 빠졌을 때 사용)
 export const DEFAULT_OPTIONS = {
-  useAutoQuality: false, // 치지직 정책으로 사용 중지 (팝업에서 잠금)
-  useLiveBar: false, // 치지직 정책으로 사용 중지 (팝업에서 잠금)
+  useAutoQuality: false,
+  useLiveBar: false,
   useVideoOverlay: true,
   useAutoRefresh: true,
   useVideoTime: true,
@@ -11,7 +11,6 @@ export const DEFAULT_OPTIONS = {
   useVideoUI: true,
   useHideBanner: false,
   useHideRecommend: false,
-  useSwapNav: true,
   useThumbnailZoom: false,
 };
 

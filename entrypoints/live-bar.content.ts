@@ -2,19 +2,19 @@ import {
   getOptions,
   startUrlWatcher,
   observeElement,
-  onDOMReady,
-  isLivePage,
 } from "@/utils/content-helpers";
 
 const VIDEO_LAYOUT_NAME = "div#live_player_layout";
 const VIDEO_ELEMENT_NAME = "video.webplayer-internal-video";
 const BOTTOM_SEL = "div.pzp-pc__bottom";
 const EDGE_EPS = 0.5;
-const LIVE_EPS = 3.5;
+// 치지직 기본 재생 위치는 라이브 끝보다 3~4.5초 뒤라, 그보다 넉넉해야 LIVE 표시가 깜빡이지 않음
+const LIVE_EPS = 6;
 const MAX_VIDEO_DURATION = 60 * 1.5;
 
 const CSS = `
       .live-bar-box{display:flex !important;position:absolute;left:0px;bottom:30px !important;width:100%;font-size:11px;line-height:1;}
+      .live-bar-box[hidden]{display:none !important;}
       .live-bar-box .live-bar-ui{width:100%;display:flex;gap:8px;align-items:center;color:#fff;padding:6px 8px;}
       .live-bar-box .go{width:45px;border:0;border-radius:6px;padding:2px 8px;background:#868e96;color:#fff;cursor:pointer;font-size:11px;line-height:1;margin-left:4px;}
       .live-bar-box .go.live{background:rgb(221, 51, 51);box-shadow:0px 0px 4px rgba(221, 51, 51, 0.5);}
@@ -118,8 +118,6 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
 
   if (bottom.querySelector(".live-bar-box")) return;
 
-  document.querySelector(`${BOTTOM_SEL} .slider`)?.remove();
-
   const wrap = document.createElement("div");
   wrap.className = "live-bar-box pzp-pc__progress-slider";
   wrap.innerHTML = `
@@ -153,6 +151,8 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
 
   const useRVFC = "requestVideoFrameCallback" in v;
   let rafId = 0;
+  // 비디오/바가 사라지면 비디오·레이아웃에 단 리스너와 갱신 루프를 함께 정리
+  const alive = new AbortController();
 
   const onMove = (e: PointerEvent) => {
     lastEvt = e;
@@ -205,6 +205,12 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
   }
 
   function updateUI() {
+    // 치지직 자체 재생바(타임머신 등)가 표시되는 방송에서는 겹치지 않도록 숨김
+    const native = wrap.parentElement?.querySelector(
+      ".pzp-pc__progress-slider:not(.live-bar-box)"
+    );
+    wrap.hidden = !!native && getComputedStyle(native).display !== "none";
+
     const { start, end } = getEdges(v);
 
     const percent = (v.currentTime - start) / (end - start);
@@ -222,7 +228,8 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
       btn.textContent = "LIVE";
       btn.classList.add("live");
     } else {
-      btn.textContent = timeFormat(v.currentTime - end + start - totalTime);
+      // 라이브 끝점 기준 지연 시간 (hover 툴팁과 같은 기준)
+      btn.textContent = timeFormat(v.currentTime - end);
       btn.classList.remove("live");
     }
     if (lastEvt) renderAt(lastEvt.clientX);
@@ -230,16 +237,19 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
 
   function seekTo(val: number) {
     const { start, end } = getEdges(v);
-    const lo = start;
-    const hi = end;
-    v.currentTime = Math.min(hi - 1, Math.max(lo, val));
+    const t = Math.min(end - 1, Math.max(start, val));
+    // 라이브 끝 1초 안에서 앞으로 가는 요청(→ 키, LIVE 버튼)이 끝-1초로 잘려 오히려 뒤로 가지 않게 함
+    if (val > v.currentTime && t <= v.currentTime) return;
+    v.currentTime = t;
   }
 
   slide.addEventListener("mousedown", seekFromClick);
-  document
-    .querySelector(VIDEO_LAYOUT_NAME)
-    ?.addEventListener("keydown", (evt) => {
+  document.querySelector(VIDEO_LAYOUT_NAME)?.addEventListener(
+    "keydown",
+    (evt) => {
       const e = evt as KeyboardEvent;
+      // 바를 숨긴 상태(치지직 자체 재생바 사용 중)면 방향키는 플레이어 기본 동작에 맡김
+      if (wrap.hidden) return;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
         e.preventDefault();
         e.stopPropagation();
@@ -255,7 +265,9 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
 
         requestAnimationFrame(() => wrap.classList.remove("no-anim"));
       }
-    });
+    },
+    { signal: alive.signal }
+  );
 
   btn.addEventListener("click", () => {
     const { end, ok } = getEdges(v);
@@ -282,11 +294,13 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
 
   function loopRVFC() {
     (v as any).requestVideoFrameCallback(() => {
+      if (alive.signal.aborted) return;
       updateUI();
       loopRVFC();
     });
   }
   function loopRAF() {
+    if (alive.signal.aborted) return;
     updateUI();
     rafId = requestAnimationFrame(loopRAF);
   }
@@ -303,7 +317,7 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
     "ratechange",
     "timeupdate",
     "resize",
-  ].forEach((ev) => v.addEventListener(ev, updateUI));
+  ].forEach((ev) => v.addEventListener(ev, updateUI, { signal: alive.signal }));
 
   updateUI();
   if (useRVFC) loopRVFC();
@@ -312,8 +326,13 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
   const mo = new MutationObserver(() => {
     if (!document.contains(v) || !document.contains(wrap)) {
       if (rafId) cancelAnimationFrame(rafId);
+      alive.abort();
       wrap.remove();
       mo.disconnect();
+      // 컨트롤 바만 다시 그려진 경우(비디오 유지) 새 바를 붙임
+      // (새 bottom 감지 콜백은 이 콜백보다 먼저 돌아 플래그 때문에 건너뛰므로 여기서 직접 재시도)
+      (v as any).__liveBarMounted = false;
+      tryMountAll();
     }
   });
   mo.observe(document.documentElement, { childList: true, subtree: true });
@@ -322,45 +341,23 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
 }
 
 function tryMountAll() {
-  if (!isLivePage()) return;
+  if (!location.pathname.startsWith("/live/")) return;
   document
     .querySelectorAll<HTMLVideoElement>(VIDEO_ELEMENT_NAME)
-    .forEach((v) => {
-      const bottom = findBottomContainer(v);
-      if (bottom) mount(v);
-    });
+    .forEach((v) => mount(v));
 }
 
 function setupLiveBarObserver() {
-  onDOMReady(tryMountAll);
-
-  // 비디오 요소 추가 감지
-  observeElement({
-    selector: VIDEO_ELEMENT_NAME,
-    onElementAdded: () => tryMountAll(),
-  });
-
-  // 컨트롤 바 추가 감지
-  observeElement({
-    selector: BOTTOM_SEL,
-    onElementAdded: () => tryMountAll(),
-  });
-
-  // URL 변경 감지
-  startUrlWatcher({
-    onPathChange: () => tryMountAll(),
-    interval: 500,
-  });
+  // 비디오/컨트롤 바가 이미 있으면 즉시, 이후 추가되거나 URL이 바뀌면 마운트 시도
+  observeElement({ selector: VIDEO_ELEMENT_NAME, onElementAdded: tryMountAll });
+  observeElement({ selector: BOTTOM_SEL, onElementAdded: tryMountAll });
+  startUrlWatcher({ onPathChange: tryMountAll });
 }
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   runAt: "document_idle",
   async main() {
-    // 치지직 정책으로 사용 중지 (팝업에서도 잠금): 예전에 켜 둔 저장값이 있어도 실행하지 않음
-    // (치지직 자체 타임머신 재생바와도 겹침)
-    return;
-
     if (!(await getOptions()).useLiveBar) return;
     setupLiveBarObserver();
   },
