@@ -7,6 +7,24 @@ defineProps<{ options: Options }>();
 const emit = defineEmits<{
   (e: "update:options", value: any): void;
 }>();
+
+// 사용불가 옵션(자동 화질변경·LIVE 재생바)은 ` 키를 누르고 있는 동안만 변경 가능
+const unlocked = ref(false);
+const onKey = (e: KeyboardEvent) => {
+  if (e.code === "Backquote") unlocked.value = e.type === "keydown";
+};
+const lock = () => (unlocked.value = false); // 키를 뗀 걸 못 받는 경우(포커스 이탈) 대비
+
+onMounted(() => {
+  window.addEventListener("keydown", onKey);
+  window.addEventListener("keyup", onKey);
+  window.addEventListener("blur", lock);
+});
+onUnmounted(() => {
+  window.removeEventListener("keydown", onKey);
+  window.removeEventListener("keyup", onKey);
+  window.removeEventListener("blur", lock);
+});
 </script>
 
 <template>
@@ -84,41 +102,85 @@ const emit = defineEmits<{
         </div>
       </div>
     </div>
-    <div w="full" grid gap="2">
-      <div w="full" flex items="top" justify="between">
-        <div w="full">
-          <div text="4">자동 화질변경</div>
-          <div text="3 gray-5">
-            광고 차단시 화질이 낮아지는 문제를 해결합니다.
+    <a-tooltip placement="top" title="치지직 정책으로 인해 사용할 수 없습니다.">
+      <div w="full" grid gap="2" relative>
+        <div
+          v-if="!unlocked"
+          absolute
+          top="0"
+          left="0"
+          right="0"
+          h="full"
+          flex
+          items="center"
+          justify="center"
+        >
+          <div class="i-line-md-cancel" text="6"></div>
+        </div>
+        <div
+          w="full"
+          flex
+          items="top"
+          class="flex"
+          :class="{ 'opacity-33': !unlocked }"
+          justify="between"
+        >
+          <div w="full">
+            <div text="4">자동 화질변경</div>
+            <div text="3 gray-5">
+              광고 차단시 화질이 낮아지는 문제를 해결합니다.
+            </div>
+          </div>
+          <div>
+            <a-switch
+              :disabled="!unlocked"
+              :checked="options.useAutoQuality"
+              @update:checked="
+                emit('update:options', { ...options, useAutoQuality: $event })
+              "
+            />
           </div>
         </div>
-        <div>
-          <a-switch
-            :checked="options.useAutoQuality"
-            @update:checked="
-              emit('update:options', { ...options, useAutoQuality: $event })
-            "
-          />
-        </div>
       </div>
-    </div>
-    <div w="full" grid gap="2">
-      <div w="full" flex items="top" justify="between">
-        <div w="full">
-          <div text="4">LIVE 재생바</div>
-          <div text="3 gray-5">
-            방송 접속시점부터 최대 1분30초간 재생바를 제공합니다.
+      <div w="full" grid gap="2" mt="2" relative>
+        <div
+          v-if="!unlocked"
+          absolute
+          top="0"
+          left="0"
+          right="0"
+          h="full"
+          flex
+          items="center"
+          justify="center"
+        >
+          <div class="i-line-md-cancel" text="6"></div>
+        </div>
+        <div
+          w="full"
+          flex
+          items="top"
+          class="flex"
+          :class="{ 'opacity-33': !unlocked }"
+          justify="between"
+        >
+          <div w="full">
+            <div text="4">LIVE 재생바</div>
+            <div text="3 gray-5">
+              방송 접속시점부터 최대 1분30초간 재생바를 제공합니다.
+            </div>
+          </div>
+          <div>
+            <a-switch
+              :disabled="!unlocked"
+              :checked="options.useLiveBar"
+              @update:checked="
+                emit('update:options', { ...options, useLiveBar: $event })
+              "
+            />
           </div>
         </div>
-        <div>
-          <a-switch
-            :checked="options.useLiveBar"
-            @update:checked="
-              emit('update:options', { ...options, useLiveBar: $event })
-            "
-          />
-        </div>
       </div>
-    </div>
+    </a-tooltip>
   </div>
 </template>
