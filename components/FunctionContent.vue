@@ -107,7 +107,7 @@ onUnmounted(() => {
         <div w="full">
           <div text="4">채팅창 정렬</div>
           <div text="3 gray-5">
-            배지·닉네임 폭을 고정해 채팅 내용의 시작 위치를 맞춥니다.
+            배지를 아이콘 한 칸에 모으고, 긴 닉네임은 최대 80px로 줄여 표시합니다.
           </div>
         </div>
         <div>

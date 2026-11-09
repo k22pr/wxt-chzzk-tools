@@ -1,6 +1,6 @@
 /**
  * chat-align.content.ts
- * 라이브·VOD 채팅창의 배지 칸(아이콘 1개 크기)과 닉네임 칸(70px)을 고정해 메시지 시작 위치를 정렬
+ * 라이브·VOD 채팅창의 배지 칸을 아이콘 1개 크기로 고정하고 닉네임을 최대 80px로 제한
  * - 배지 없음: 배지 하나만큼 빈 자리 / 1개: 그대로 / 2개 이상: 배지 하나 크기 안에 2x2로 작게
  * - 채팅 행은 채팅창에만 있으므로 /live, /video 외 페이지에는 영향 없음
  */
@@ -59,21 +59,12 @@ const CSS = `
     height: 100%;
   }
 
-  /* 채팅 항목 사이 여백(3px) 제거: 채팅 목록(라이브 _item_8lqsk_, VOD _item_61avy_)의 모든 항목 (후원 등 포함) */
-  *:has(> [class*="_item_"] > [class*="_container_"] > [class*="_chatting_message_"]) > [class*="_item_"] {
-    margin-bottom: 0;
-  }
-
-  /* 닉네임 70px 고정. 넘치면 치지직 자체 말줄임(...) 스타일이 적용됨 */
+  /* 닉네임 최대 80px. 넘치면 치지직 자체 말줄임(...) 스타일이 적용됨 */
   ${NAME_BOX} > [class*="_nickname_"] {
     flex: none;
-    width: 70px;
-    min-width: 70px;
-    max-width: 70px;
+    max-width: 80px;
     /* 치지직은 배지가 있을 때만 닉네임에 1px 여백을 줘서, 배지 유무와 관계없이 같게 맞춤 */
     margin-left: 0;
-    /* 버튼 기본값(가운데 정렬)이 상속돼 짧은 닉네임이 가운데로 가므로 왼쪽 정렬 */
-    text-align: left;
   }
 `;
 
