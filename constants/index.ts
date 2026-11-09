@@ -8,7 +8,7 @@ export const DEFAULT_OPTIONS = {
   useAutoRefresh: true,
   useVideoTime: true,
   useThumbnailRefresh: true,
-  useVideoUI: true,
+  useVideoUI: false,
   useHideBanner: false,
   useHideRecommend: false,
   useHideRecommendContent: false,
