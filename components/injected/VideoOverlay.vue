@@ -189,8 +189,16 @@ const openAt = (nx: number, ny: number) => {
   syncParamsFromAudio();
 };
 
+// 오버레이 안에서 누르고 밖에서 놓은 경우(슬라이더 드래그)는 바깥 클릭으로 보지 않음
+// (이때 click 대상은 두 지점의 공통 조상이라 아래 contains 검사로는 구분이 안 됨)
+// 키보드·코드로 생긴 click(detail 0)은 앞선 누름과 무관하므로 그대로 바깥 클릭으로 처리
+let pressedInside = false;
+const handlePointerDown = (event: PointerEvent) => {
+  pressedInside = !!overlayRef.value?.contains(event.target as Node);
+};
+
 const handleGlobalClick = (event: MouseEvent) => {
-  if (!show.value) return;
+  if (!show.value || (pressedInside && event.detail > 0)) return;
   const root = overlayRef.value;
   const target = event.target as Node | null;
 
@@ -269,10 +277,12 @@ onMounted(() => {
   }
 
   document.addEventListener("click", handleGlobalClick);
+  document.addEventListener("pointerdown", handlePointerDown, true);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleGlobalClick);
+  document.removeEventListener("pointerdown", handlePointerDown, true);
 });
 
 // 외부에서 제어할 수 있도록 expose

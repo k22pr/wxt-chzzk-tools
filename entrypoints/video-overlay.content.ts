@@ -1,4 +1,4 @@
-import { createApp } from "vue";
+import { createApp, type App } from "vue";
 import VideoOverlay from "@/components/injected/VideoOverlay.vue";
 import { getOptions, observeElement } from "@/utils/content-helpers";
 
@@ -16,6 +16,22 @@ export default defineContentScript({
 
     // 오버레이 인스턴스를 저장할 맵 (비디오 요소 -> 오버레이 앱 인스턴스)
     const overlayMap = new WeakMap<Element, any>();
+    // 비디오가 사라지면 unmount하기 위한 앱 (컴포넌트의 document 리스너 정리)
+    const appMap = new WeakMap<Element, App>();
+
+    // 오버레이는 영상 영역 안에 붙어 있어서, 그 안의 클릭이 플레이어에 '영상 클릭'(재생/일시정지)·
+    // '영상 더블클릭'(전체화면)으로 전달됨. 오버레이에서 누른 경우(슬라이더를 끌다 영상 위에서 놓은 경우 포함)는 막음
+    let pressedInOverlay = false;
+    document.addEventListener(
+      "pointerdown",
+      (e) => {
+        pressedInOverlay = !!(e.target as Element | null)?.closest?.(".pzzk-tools-comp-overlay");
+      },
+      true
+    );
+    const stopIfOverlayPress = (e: Event) => {
+      if (pressedInOverlay) e.stopPropagation();
+    };
 
     // 비디오별 오디오 체인을 저장할 맵 (비디오 요소 -> { context, source, filter, compressor, gain })
     const audioChainMap = new WeakMap<
@@ -220,6 +236,8 @@ export default defineContentScript({
       container.style.zIndex = "100";
 
       parent.appendChild(container);
+      parent.addEventListener("click", stopIfOverlayPress);
+      parent.addEventListener("dblclick", stopIfOverlayPress);
 
       const app = createApp(VideoOverlay, {
         getCompressorParams: () => {
@@ -256,6 +274,7 @@ export default defineContentScript({
       });
       const instance = app.mount(container as HTMLElement);
       overlayMap.set(video, instance); // 인스턴스 저장
+      appMap.set(video, app);
     }
 
     async function mountButton(controlBar: Element) {
@@ -323,14 +342,16 @@ export default defineContentScript({
     }
 
     // 비디오 요소 감지 및 마운트
-    // SPA 이동 시 비디오 요소가 교체되므로, 완전히 제거된 비디오의 AudioContext는 닫아 누수 방지
+    // SPA 이동 시 비디오 요소가 교체되므로, 완전히 제거된 비디오의 AudioContext와 오버레이 앱은 정리해 누수 방지
     // (DOM 내 이동은 잠시 분리됐다가 다시 붙으므로 지연 후 isConnected로 판별)
     observeElement({
       selector: VIDEO_SELECTOR,
       onElementAdded: (el) => mountUi(el),
       onElementRemoved: (el) =>
         setTimeout(() => {
-          if (!el.isConnected) audioChainMap.get(el)?.context.close();
+          if (el.isConnected) return;
+          audioChainMap.get(el)?.context.close();
+          appMap.get(el)?.unmount();
         }, 3000),
     });
 

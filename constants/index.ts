@@ -11,6 +11,7 @@ export const DEFAULT_OPTIONS = {
   useVideoUI: true,
   useHideBanner: false,
   useHideRecommend: false,
+  useHideRecommendContent: false,
   useThumbnailZoom: false,
 };
 
@@ -20,4 +21,6 @@ export type Options = typeof DEFAULT_OPTIONS;
 export const SELECTOR = {
   topBanner: 'section:has([data-nlog-area="schedule_banner"])',
   recommendLive: 'section:has([data-nlog-area="chzzk_main_top_live"])',
+  // 홈의 수동 추천 그룹 카드('치지직 추천 콘텐츠' 등)
+  recommendContent: 'section[data-nlog-area="chzzk_card"][data-nlog-params*="GROUPED_M_RECOMMENDED"]',
 };

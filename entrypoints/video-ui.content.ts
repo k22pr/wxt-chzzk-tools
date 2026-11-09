@@ -33,6 +33,8 @@ const CSS = `
     background: rgba(15, 17, 19, 0.6);
     border: 1px solid rgba(255,255,255,0.1);
     box-shadow:0px 0px 30px rgba(0,0,0,0.6);
+    /* 치지직은 이 영역을 클릭 통과(none)로 둬서, 보이는 패널의 빈 곳을 누르면 아래 비디오가 클릭돼 일시정지됨 */
+    pointer-events: auto;
   }
 
   :is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc .pzp-pc__progress-slider .pzp-ui-slider__wrap,

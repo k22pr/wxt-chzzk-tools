@@ -13,9 +13,11 @@ const HIGHLIGHT_ID = "pzzk-tools-highlight-overlay";
 
 const highlightElement = async (selector: string, show: boolean) => {
   try {
+    // 활성 탭이 치지직일 때만 (chrome:// 등 다른 페이지엔 스크립트를 넣을 수 없어 오류가 남음)
     const tabs = await browser.tabs.query({
       active: true,
       currentWindow: true,
+      url: "https://chzzk.naver.com/*",
     });
     const tabId = tabs[0]?.id;
     if (!tabId) return;
@@ -132,6 +134,29 @@ const onRecommendHover = (show: boolean) => {
             :checked="options.useHideRecommend"
             @update:checked="
               emit('update:options', { ...options, useHideRecommend: $event })
+            "
+          />
+        </div>
+      </div>
+    </div>
+    <div w="full" grid gap="2">
+      <div
+        w="full"
+        flex
+        items="top"
+        justify="between"
+        @mouseenter="highlightElement(SELECTOR.recommendContent, true)"
+        @mouseleave="highlightElement(SELECTOR.recommendContent, false)"
+      >
+        <div w="full">
+          <div text="4">추천 콘텐츠 숨김</div>
+          <div text="3 gray-5">메인 페이지 추천 콘텐츠 섹션을 숨깁니다.</div>
+        </div>
+        <div>
+          <a-switch
+            :checked="options.useHideRecommendContent"
+            @update:checked="
+              emit('update:options', { ...options, useHideRecommendContent: $event })
             "
           />
         </div>

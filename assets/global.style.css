@@ -17,6 +17,10 @@
   backdrop-filter: blur(6px);
   font-size: 12px;
 }
+/* 미니 플레이어로 바뀌면 열린 오버레이가 플레이어 밖 예전 위치에 잘려 남으므로 숨김 (돌아오면 다시 보임) */
+:is(#live_player_layout, #player_layout).pip_mode .pzzk-tools-comp-overlay {
+  display: none !important;
+}
 .pzzk-tools-comp-overlay .content {
   display: flex;
   flex-direction: column;

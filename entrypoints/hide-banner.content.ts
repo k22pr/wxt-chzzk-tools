@@ -1,6 +1,6 @@
 /**
  * hide-banner.content.ts
- * 메인 페이지의 상단 배너 및 추천 라이브 숨김 처리
+ * 메인 페이지의 상단 배너, 추천 라이브, 추천 콘텐츠 숨김 처리
  */
 
 import { SELECTOR, type Options } from "@/constants";
@@ -20,10 +20,11 @@ function pauseHiddenPreview(e: Event) {
   }
 }
 
-function apply({ useHideBanner, useHideRecommend }: Options) {
+function apply({ useHideBanner, useHideRecommend, useHideRecommendContent }: Options) {
   const selectors = [
     useHideBanner && SELECTOR.topBanner,
     useHideRecommend && SELECTOR.recommendLive,
+    useHideRecommendContent && SELECTOR.recommendContent,
   ].filter(Boolean);
 
   let style = document.getElementById(STYLE_ID);

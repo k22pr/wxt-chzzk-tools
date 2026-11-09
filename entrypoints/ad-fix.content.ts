@@ -1,16 +1,43 @@
 /**
  * ad-fix.content.ts
- * 광고 감지 API를 차단하고, 광고 차단 팝업이 떠 있는 동안 키보드 볼륨 조절을 비디오로 전달하는 스크립트
+ * 광고 표시 플래그·광고 감지 API를 차단하고, 광고 차단 팝업이 떠 있는 동안 키보드 볼륨 조절을 비디오로 전달하는 스크립트
  * (팝업 자체는 global.style.css에서 숨김)
  */
 
 const AD_BLOCK_POPUP = '[data-nlog-area="ad_blocking_info_layer"]';
+// 광고 표시 여부 API. 응답은 {livePlaybackJson:{liveId, chatChannelId}}로 위장한 프리롤/미드롤 플래그
+const AD_FLAG_API = "/seoraksan?";
+const NO_ADS = JSON.stringify({
+  code: 200,
+  message: null,
+  content: { playerAdDisplayResponse: { preRoll: false, midRoll: false } },
+});
 
 export default defineContentScript({
   matches: ["https://chzzk.naver.com/*"],
   runAt: "document_start",
   world: "MAIN",
   main() {
+    // --- 0. 광고 표시 플래그 차단 ---
+    // 광고 플래그는 URL·응답을 AES-GCM으로 암호화한 터널(api.chzzk.naver.com/service/t/...)로 받아서
+    // 네트워크 단에선 구분이 안 됨. 요청마다 URL을 암호화한 키로 응답을 복호화하므로,
+    // 플래그 API URL을 암호화한 키의 복호화 결과를 '광고 없음'으로 바꾼다.
+    const subtle = crypto.subtle;
+    const encrypt = subtle.encrypt.bind(subtle);
+    const decrypt = subtle.decrypt.bind(subtle);
+    const adFlagKeys = new WeakSet<CryptoKey>();
+    subtle.encrypt = (algorithm, key, data) => {
+      try {
+        if (new TextDecoder().decode(data).includes(AD_FLAG_API)) adFlagKeys.add(key);
+      } catch {}
+      return encrypt(algorithm, key, data);
+    };
+    subtle.decrypt = (algorithm, key, data) => {
+      if (!adFlagKeys.has(key)) return decrypt(algorithm, key, data);
+      console.log("[pzzk-tools] 광고 표시 플래그 차단됨");
+      return Promise.resolve(new TextEncoder().encode(NO_ADS).buffer as ArrayBuffer);
+    };
+
     // --- 1. 네트워크 차단 (Fetch/XHR) ---
     const originalFetch = window.fetch;
     window.fetch = function (input, init) {
