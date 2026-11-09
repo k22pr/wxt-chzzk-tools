@@ -1,402 +1,353 @@
 // ==UserScript==
 // @name         CHZZK Live Bar
-// @version      2.0.0
+// @version      2.1.0
 // @match        https://chzzk.naver.com/*
 // @description  치지직 라이브 방송에서 접속 시점부터 최대 1분30초간 되감기가 가능한 재생바를 제공합니다.
 // @grant        none
 // @author       k22pr
 // @namespace    k22pr/chzzk-live-bar
 // @run-at       document-idle
+// @downloadURL https://update.greasyfork.org/scripts/547123/CHZZK%20Live%20Bar.user.js
+// @updateURL https://update.greasyfork.org/scripts/547123/CHZZK%20Live%20Bar.meta.js
 // ==/UserScript==
 
-(function() {
-    'use strict';
+(function () {
+  "use strict";
 
-    // 상수 정의
-    const VIDEO_LAYOUT_NAME = "div#live_player_layout";
-    const VIDEO_ELEMENT_NAME = "video.webplayer-internal-video";
-    const BOTTOM_SEL = "div.pzp-pc__bottom";
-    const EDGE_EPS = 0.5;
-    const LIVE_EPS = 3.5;
-    const MAX_VIDEO_DURATION = 60 * 1.5;
+  const VIDEO_LAYOUT_NAME = "div#live_player_layout";
+  const VIDEO_ELEMENT_NAME = "video.webplayer-internal-video";
+  const BOTTOM_SEL = "div.pzp-pc__bottom";
+  const EDGE_EPS = 0.5;
+  // 치지직 기본 재생 위치는 라이브 끝보다 3~4.5초 뒤라, 그보다 넉넉해야 LIVE 표시가 깜빡이지 않음
+  const LIVE_EPS = 6;
+  const MAX_VIDEO_DURATION = 60 * 1.5;
 
-    // CSS 스타일
-    const CSS = `
-        .live-bar-box{display:flex !important;position:absolute;left:0px;bottom:30px !important;width:100%;font-size:11px;line-height:1;}
-        .live-bar-box .live-bar-ui{width:100%;display:flex;gap:8px;align-items:center;color:#fff;padding:6px 8px;}
-        .live-bar-box .go{width:45px;border:0;border-radius:6px;padding:2px 8px;background:#868e96;color:#fff;cursor:pointer;font-size:11px;line-height:1;margin-left:4px;}
-        .live-bar-box .go.live{background:rgb(221, 51, 51);box-shadow:0px 0px 4px rgba(221, 51, 51, 0.5);}
-        .live-bar-box .t{white-space:nowrap;min-width:20px;text-align:center}
-        .live-bar-box .time{display:flex;gap:4px;align-items:center}
-        .live-bar-box .slide-box{display:flex;flex:1;position:relative;align-items:center;width:100%; height:4px;padding:8px 0px;cursor:pointer;background:transparent;}
-        .live-bar-box .slide-box:hover{height:6px;}
-        .live-bar-box .slide-box div{transition:width 0.1s, height 0.2s;}
-        .live-bar-box .slide-box .track{position:absolute;left:0px;width:100%;height:2px;border-radius:3px;background:rgba(255,255,255,0.5);}
-        .live-bar-box .slide-box .rng{position:absolute;left:0px;height:2px;border-radius:3px;background:#00f889;}
-        .live-bar-box .slide-box:hover .track{height:6px;border-radius:3px;box-shadow:0px 0px 4px rgba(0,0,0,0.3);}
-        .live-bar-box .slide-box:hover .rng{height:6px;border-radius:3px;box-shadow:0px 0px 5px #00f889;}
-        .live-bar-box.no-anim .slide-box .rng { transition: none !important; }
+  const CSS = `
+      .live-bar-box{display:flex !important;position:absolute;left:0px;bottom:30px !important;width:100%;font-size:11px;line-height:1;}
+      .live-bar-box[hidden]{display:none !important;}
+      .live-bar-box .live-bar-ui{width:100%;display:flex;gap:8px;align-items:center;color:#fff;padding:6px 8px;}
+      .live-bar-box .go{width:45px;border:0;border-radius:6px;padding:2px 8px;background:#868e96;color:#fff;cursor:pointer;font-size:11px;line-height:1;margin-left:4px;}
+      .live-bar-box .go.live{background:rgb(221, 51, 51);box-shadow:0px 0px 4px rgba(221, 51, 51, 0.5);}
+      .live-bar-box .t{white-space:nowrap;min-width:20px;text-align:center}
+      .live-bar-box .time{display:flex;gap:4px;align-items:center}
+      .live-bar-box .slide-box{display:flex;flex:1;position:relative;align-items:center;width:100%; height:4px;padding:8px 0px;cursor:pointer;background:transparent;}
+      .live-bar-box .slide-box:hover{height:6px;}
+      .live-bar-box .slide-box div{transition:width 0.1s, height 0.2s;}
+      .live-bar-box .slide-box .track{position:absolute;left:0px;width:100%;height:2px;border-radius:3px;background:rgba(255,255,255,0.5);}
+      .live-bar-box .slide-box .rng{position:absolute;left:0px;height:2px;border-radius:3px;background:#00f889;}
+      .live-bar-box .slide-box:hover .track{height:6px;border-radius:3px;box-shadow:0px 0px 4px rgba(0,0,0,0.3);}
+      .live-bar-box .slide-box:hover .rng{height:6px;border-radius:3px;box-shadow:0px 0px 5px #00f889;}
+      .live-bar-box.no-anim .slide-box .rng { transition: none !important; }
 
-        .live-bar-box .hover-tip{
-            position:absolute; top:0; transform:translate(-50%,-140%);
-            background:rgba(0,0,0,.7); color:#fff; padding:2px 6px; border-radius:4px;
-            font-size:11px/1; pointer-events:none;
-            opacity:0; transition:opacity .12s;
-        }
-        .live-bar-box .hover-tip.show{ opacity:1; }
-        .live-bar-box .hover-x{
-            position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,1);
-            transform:translateX(-.5px); opacity:0; transition:opacity .12s;
-        }
-        .live-bar-box .hover-x.show{ opacity:1; }
+      .live-bar-box .hover-tip{
+        position:absolute; top:0; transform:translate(-50%,-140%);
+        background:rgba(0,0,0,.7); color:#fff; padding:2px 6px; border-radius:4px;
+        font-size:11px/1; pointer-events:none;
+        opacity:0; transition:opacity .12s;
+      }
+      .live-bar-box .hover-tip.show{ opacity:1; }
+      .live-bar-box .hover-x{
+        position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,1);
+        transform:translateX(-.5px); opacity:0; transition:opacity .12s;
+      }
+      .live-bar-box .hover-x.show{ opacity:1; }
+`;
+
+  const styleOnce = (() => {
+    let done = false;
+    return () => {
+      if (done) return;
+      done = true;
+      const s = document.createElement("style");
+      s.textContent = CSS;
+      document.head.appendChild(s);
+    };
+  })();
+
+  function timeFormat(t) {
+    const h = (t / 3600) | 0;
+    const m = ((t % 3600) / 60) | 0;
+    const s = t % 60 | 0;
+
+    return h
+      ? `${t > 0 ? "" : "-"}${Math.abs(h)}:${String(Math.abs(m)).padStart(2, "0")}:${String(Math.abs(s)).padStart(2, "0")}`
+      : `${t > 0 ? "" : "-"}${Math.abs(m)}:${String(Math.abs(s)).padStart(2, "0")}`;
+  }
+
+  function getEdges(v) {
+    const s = v.seekable;
+    if (s && s.length) {
+      const start = s.start(0);
+      const end = s.end(s.length - 1);
+      return { start: Math.max(start, end - MAX_VIDEO_DURATION), end, ok: true };
+    }
+    const b = v.buffered;
+    if (b && b.length) {
+      const start = b.start(0);
+      const end = b.end(b.length - 1);
+      return { start: Math.max(start, end - MAX_VIDEO_DURATION), end, ok: true };
+    }
+    return { start: 0, end: isFinite(v.duration) ? v.duration : 0, ok: false };
+  }
+
+  function findBottomContainer(v) {
+    const c = document.querySelector(BOTTOM_SEL);
+    if (c) return c;
+    let node = v;
+    while (node) {
+      const root = node.getRootNode?.();
+      const host = root && root.host;
+      if (!host) break;
+      const inHost = root.querySelector?.(BOTTOM_SEL);
+      if (inHost) return inHost;
+      node = host;
+    }
+    return null;
+  }
+
+  function mount(v) {
+    if (v.__liveBarMounted) return;
+    const bottom = findBottomContainer(v);
+    if (!bottom) return;
+
+    styleOnce();
+
+    if (bottom.querySelector(".live-bar-box")) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "live-bar-box pzp-pc__progress-slider";
+    wrap.innerHTML = `
+      <div class="live-bar-ui">
+      <div class='slide-box'>
+        <div class='track'></div>
+        <div class="rng"></div>
+      </div>
+        <div class='time'>
+          <span class="t total">0:00</span>
+          <button class="go">LIVE</button>
+        </div>
+      </div>
     `;
+    bottom.appendChild(wrap);
 
-    // 스타일 한 번만 주입
-    const styleOnce = (() => {
-        let done = false;
-        return () => {
-            if (done) return;
-            done = true;
-            const s = document.createElement("style");
-            s.textContent = CSS;
-            document.head.appendChild(s);
-        };
-    })();
+    const rng = wrap.querySelector(".rng");
+    const tTotal = wrap.querySelector(".total");
+    const btn = wrap.querySelector(".go");
+    const slide = wrap.querySelector(".slide-box");
 
-    // 시간 포맷 함수
-    function timeFormat(t) {
-        const h = (t / 3600) | 0;
-        const m = ((t % 3600) / 60) | 0;
-        const s = t % 60 | 0;
+    const tip = document.createElement("div");
+    tip.className = "hover-tip";
+    tip.textContent = "0:00";
+    const cross = document.createElement("div");
+    cross.className = "hover-x";
+    slide.appendChild(cross);
+    slide.appendChild(tip);
+    let raf = 0;
+    let lastEvt = null;
 
-        return h
-            ? `${t > 0 ? "" : "-"}${Math.abs(h)}:${String(Math.abs(m)).padStart(2, "0")}:${String(Math.abs(s)).padStart(2, "0")}`
-            : `${t > 0 ? "" : "-"}${Math.abs(m)}:${String(Math.abs(s)).padStart(2, "0")}`;
-    }
+    const useRVFC = "requestVideoFrameCallback" in v;
+    let rafId = 0;
+    // 비디오/바가 사라지면 비디오·레이아웃에 단 리스너와 갱신 루프를 함께 정리
+    const alive = new AbortController();
 
-    // 재생 가능 범위 계산
-    function getEdges(v) {
-        const s = v.seekable;
-        if (s && s.length) {
-            const start = s.start(0);
-            const end = s.end(s.length - 1);
-            return {
-                start: Math.max(start, end - MAX_VIDEO_DURATION),
-                end: s.end(s.length - 1),
-                ok: true,
-            };
-        }
-        const b = v.buffered;
-        if (b && b.length) {
-            const start = b.start(0);
-            const end = b.end(b.length - 1);
-            return {
-                start: Math.max(start, end - MAX_VIDEO_DURATION),
-                end: b.end(b.length - 1),
-                ok: true,
-            };
-        }
-        return { start: 0, end: isFinite(v.duration) ? v.duration : 0, ok: false };
-    }
-
-    // 컨트롤 바 컨테이너 찾기
-    function findBottomContainer(v) {
-        let c = document.querySelector(BOTTOM_SEL);
-        if (c) return c;
-        let node = v;
-        while (node) {
-            const root = node.getRootNode?.();
-            const host = root && root.host;
-            if (!host) break;
-            const inHost = root.querySelector?.(BOTTOM_SEL);
-            if (inHost) return inHost;
-            node = host;
-        }
-        return null;
-    }
-
-    // 라이브 페이지 여부 확인
-    function isLivePage() {
-        return location.pathname.startsWith("/live/");
-    }
-
-    // 재생바 마운트
-    function mount(v) {
-        if (v.__liveBarMounted) return;
-        const bottom = findBottomContainer(v);
-        if (!bottom) return;
-
-        styleOnce();
-
-        if (bottom.querySelector(".live-bar-box")) return;
-
-        document.querySelector(`${BOTTOM_SEL} .slider`)?.remove();
-
-        const wrap = document.createElement("div");
-        wrap.className = "live-bar-box pzp-pc__progress-slider";
-        wrap.innerHTML = `
-            <div class="live-bar-ui">
-            <div class='slide-box'>
-                <div class='track'></div>
-                <div class="rng"></div>
-            </div>
-                <div class='time'>
-                    <span class="t total">0:00</span>
-                    <button class="go">LIVE</button>
-                </div>
-            </div>
-        `;
-        bottom.appendChild(wrap);
-
-        const rng = wrap.querySelector(".rng");
-        const tTotal = wrap.querySelector(".total");
-        const btn = wrap.querySelector(".go");
-        const slide = wrap.querySelector(".slide-box");
-
-        const tip = document.createElement("div");
-        tip.className = "hover-tip";
-        tip.textContent = "0:00";
-        const cross = document.createElement("div");
-        cross.className = "hover-x";
-        slide.appendChild(cross);
-        slide.appendChild(tip);
-        let raf = 0;
-        let lastEvt = null;
-
-        const useRVFC = "requestVideoFrameCallback" in v;
-        let rafId = 0;
-
-        const onMove = (e) => {
-            lastEvt = e;
-            if (!raf)
-                raf = requestAnimationFrame(() => {
-                    raf = 0;
-                    if (lastEvt) renderAt(lastEvt.clientX);
-                });
-        };
-
-        function seekFromClick(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-
-            wrap.classList.add("no-anim");
-            const rect = slide.getBoundingClientRect();
-            const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
-            const ratio = rect.width ? x / rect.width : 0;
-
-            const { start, end } = getEdges(v);
-            const target = start + ratio * (end - start);
-            seekTo(target);
-
-            requestAnimationFrame(() => wrap.classList.remove("no-anim"));
-        }
-
-        const atLiveEdge = (currentTime) => {
-            const { end } = getEdges(v);
-            return currentTime - end > -LIVE_EPS;
-        };
-
-        function renderAt(clientX) {
-            const rect = slide.getBoundingClientRect();
-            const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-            const ratio = rect.width ? x / rect.width : 0;
-
-            const { start, end, ok } = getEdges(v);
-            const lo = ok ? start : 0;
-            const hi = ok && isFinite(end) ? end : isFinite(v.duration) ? v.duration : lo;
-            if (!isFinite(hi) || hi <= lo) return;
-
-            const t = lo + ratio * (hi - lo);
-            const nearLive = atLiveEdge(t);
-
-            tip.textContent = nearLive ? "LIVE" : timeFormat(t - hi);
-            cross.style.left = `${x}px`;
-            tip.style.left = `${x}px`;
-        }
-
-        function updateUI() {
-            const { start, end } = getEdges(v);
-
-            const percent = (v.currentTime - start) / (end - start);
-            if (end - v.currentTime < LIVE_EPS) {
-                rng.style.width = "100%";
-            } else {
-                rng.style.width = `${Math.min(100, percent * 100)}%`;
-            }
-
-            const totalTime = Math.max(0, end - start);
-            tTotal.textContent = timeFormat(Math.min(totalTime, MAX_VIDEO_DURATION));
-
-            const live = atLiveEdge(v.currentTime);
-            if (live) {
-                btn.textContent = "LIVE";
-                btn.classList.add("live");
-            } else {
-                btn.textContent = timeFormat(v.currentTime - end + start - totalTime);
-                btn.classList.remove("live");
-            }
-            if (lastEvt) renderAt(lastEvt.clientX);
-        }
-
-        function seekTo(val) {
-            const { start, end } = getEdges(v);
-            const lo = start;
-            const hi = end;
-            v.currentTime = Math.min(hi - 1, Math.max(lo, val));
-        }
-
-        slide.addEventListener("mousedown", seekFromClick);
-        document.querySelector(VIDEO_LAYOUT_NAME)?.addEventListener("keydown", (evt) => {
-            const e = evt;
-            if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-
-                wrap.classList.add("no-anim");
-
-                if (e.key === "ArrowLeft") {
-                    seekTo(parseFloat(String(v.currentTime)) - 5);
-                } else if (e.key === "ArrowRight") {
-                    seekTo(parseFloat(String(v.currentTime)) + 5);
-                }
-
-                requestAnimationFrame(() => wrap.classList.remove("no-anim"));
-            }
+    const onMove = (e) => {
+      lastEvt = e;
+      if (!raf)
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          if (lastEvt) renderAt(lastEvt.clientX);
         });
+    };
 
-        btn.addEventListener("click", () => {
-            const { end, ok } = getEdges(v);
-            if (!ok) return;
-            seekTo(end - EDGE_EPS);
-        });
+    function seekFromClick(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
 
-        slide.addEventListener("pointerenter", (e) => {
-            tip.classList.add("show");
-            cross.classList.add("show");
-            onMove(e);
-        }, { passive: true });
+      wrap.classList.add("no-anim");
+      const rect = slide.getBoundingClientRect();
+      const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
+      const ratio = rect.width ? x / rect.width : 0;
 
-        slide.addEventListener("pointermove", onMove, { passive: true });
+      const { start, end } = getEdges(v);
+      seekTo(start + ratio * (end - start));
 
-        slide.addEventListener("pointerleave", () => {
-            tip.classList.remove("show");
-            cross.classList.remove("show");
-        });
+      requestAnimationFrame(() => wrap.classList.remove("no-anim"));
+    }
 
-        function loopRVFC() {
-            v.requestVideoFrameCallback(() => {
-                updateUI();
-                loopRVFC();
-            });
-        }
-        function loopRAF() {
-            updateUI();
-            rafId = requestAnimationFrame(loopRAF);
-        }
+    const atLiveEdge = (currentTime) => {
+      const { end } = getEdges(v);
+      return currentTime - end > -LIVE_EPS;
+    };
 
-        ["loadedmetadata", "durationchange", "progress", "playing", "pause", "waiting", "seeked", "seeking", "ratechange", "timeupdate", "resize"].forEach((ev) => v.addEventListener(ev, updateUI));
+    function renderAt(clientX) {
+      const rect = slide.getBoundingClientRect();
+      const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+      const ratio = rect.width ? x / rect.width : 0;
 
+      const { start, end, ok } = getEdges(v);
+      const lo = ok ? start : 0;
+      const hi = ok && isFinite(end) ? end : isFinite(v.duration) ? v.duration : lo;
+      if (!isFinite(hi) || hi <= lo) return;
+
+      const t = lo + ratio * (hi - lo);
+      tip.textContent = atLiveEdge(t) ? "LIVE" : timeFormat(t - hi);
+      cross.style.left = `${x}px`;
+      tip.style.left = `${x}px`;
+    }
+
+    function updateUI() {
+      // 치지직 자체 재생바(타임머신 등)가 표시되는 방송에서는 겹치지 않도록 숨김
+      const native = wrap.parentElement?.querySelector(".pzp-pc__progress-slider:not(.live-bar-box)");
+      wrap.hidden = !!native && getComputedStyle(native).display !== "none";
+
+      const { start, end } = getEdges(v);
+
+      const percent = (v.currentTime - start) / (end - start);
+      if (end - v.currentTime < LIVE_EPS) {
+        rng.style.width = "100%";
+      } else {
+        rng.style.width = `${Math.min(100, percent * 100)}%`;
+      }
+
+      const totalTime = Math.max(0, end - start);
+      tTotal.textContent = timeFormat(Math.min(totalTime, MAX_VIDEO_DURATION));
+
+      if (atLiveEdge(v.currentTime)) {
+        btn.textContent = "LIVE";
+        btn.classList.add("live");
+      } else {
+        // 라이브 끝점 기준 지연 시간 (hover 툴팁과 같은 기준)
+        btn.textContent = timeFormat(v.currentTime - end);
+        btn.classList.remove("live");
+      }
+      if (lastEvt) renderAt(lastEvt.clientX);
+    }
+
+    function seekTo(val) {
+      const { start, end } = getEdges(v);
+      const t = Math.min(end - 1, Math.max(start, val));
+      // 라이브 끝 1초 안에서 앞으로 가는 요청(→ 키, LIVE 버튼)이 끝-1초로 잘려 오히려 뒤로 가지 않게 함
+      if (val > v.currentTime && t <= v.currentTime) return;
+      v.currentTime = t;
+    }
+
+    slide.addEventListener("mousedown", seekFromClick);
+    document.querySelector(VIDEO_LAYOUT_NAME)?.addEventListener(
+      "keydown",
+      (e) => {
+        // 바를 숨긴 상태(치지직 자체 재생바 사용 중)면 방향키는 플레이어 기본 동작에 맡김
+        if (wrap.hidden) return;
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        wrap.classList.add("no-anim");
+        seekTo(v.currentTime + (e.key === "ArrowLeft" ? -5 : 5));
+        requestAnimationFrame(() => wrap.classList.remove("no-anim"));
+      },
+      { signal: alive.signal }
+    );
+
+    btn.addEventListener("click", () => {
+      const { end, ok } = getEdges(v);
+      if (!ok) return;
+      seekTo(end - EDGE_EPS);
+    });
+
+    slide.addEventListener(
+      "pointerenter",
+      (e) => {
+        tip.classList.add("show");
+        cross.classList.add("show");
+        onMove(e);
+      },
+      { passive: true }
+    );
+    slide.addEventListener("pointermove", onMove, { passive: true });
+    slide.addEventListener("pointerleave", () => {
+      tip.classList.remove("show");
+      cross.classList.remove("show");
+    });
+
+    function loopRVFC() {
+      v.requestVideoFrameCallback(() => {
+        if (alive.signal.aborted) return;
         updateUI();
-        if (useRVFC) loopRVFC();
-        else loopRAF();
-
-        const mo = new MutationObserver(() => {
-            if (!document.contains(v) || !document.contains(wrap)) {
-                if (rafId) cancelAnimationFrame(rafId);
-                wrap.remove();
-                mo.disconnect();
-            }
-        });
-        mo.observe(document.documentElement, { childList: true, subtree: true });
-
-        v.__liveBarMounted = true;
+        loopRVFC();
+      });
+    }
+    function loopRAF() {
+      if (alive.signal.aborted) return;
+      updateUI();
+      rafId = requestAnimationFrame(loopRAF);
     }
 
-    // 요소 감지 옵저버
-    function observeElement(options) {
-        const { selector, onElementAdded, root = document.documentElement } = options;
+    ["loadedmetadata", "durationchange", "progress", "playing", "pause", "waiting", "seeked", "seeking", "ratechange", "timeupdate", "resize"].forEach(
+      (ev) => v.addEventListener(ev, updateUI, { signal: alive.signal })
+    );
 
-        if (onElementAdded) {
-            root.querySelectorAll?.(selector)?.forEach(onElementAdded);
-        }
+    updateUI();
+    if (useRVFC) loopRVFC();
+    else loopRAF();
 
-        const observer = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                if (onElementAdded) {
-                    for (const node of mutation.addedNodes) {
-                        if (node.nodeType !== Node.ELEMENT_NODE) continue;
-                        const el = node;
-                        if (el.matches?.(selector)) {
-                            onElementAdded(el);
-                        }
-                        el.querySelectorAll?.(selector)?.forEach(onElementAdded);
-                    }
-                }
-            }
-        });
-
-        observer.observe(root, { childList: true, subtree: true });
-        return () => observer.disconnect();
-    }
-
-    // URL 변경 감지
-    function startUrlWatcher(options) {
-        const { onPathChange, interval = 500 } = options;
-        let lastPath = location.pathname;
-
-        const check = () => {
-            const currentPath = location.pathname;
-            if (currentPath !== lastPath) {
-                const oldPath = lastPath;
-                lastPath = currentPath;
-                onPathChange(currentPath, oldPath);
-            }
-        };
-
-        const intervalId = setInterval(check, interval);
-        check();
-
-        return () => clearInterval(intervalId);
-    }
-
-    // 모든 비디오에 재생바 마운트 시도
-    function tryMountAll() {
-        if (!isLivePage()) return;
-        document.querySelectorAll(VIDEO_ELEMENT_NAME).forEach((v) => {
-            const bottom = findBottomContainer(v);
-            if (bottom) mount(v);
-        });
-    }
-
-    // 초기화
-    function init() {
+    const mo = new MutationObserver(() => {
+      if (!document.contains(v) || !document.contains(wrap)) {
+        if (rafId) cancelAnimationFrame(rafId);
+        alive.abort();
+        wrap.remove();
+        mo.disconnect();
+        // 컨트롤 바만 다시 그려진 경우(비디오 유지) 새 바를 붙임
+        // (새 bottom 감지 콜백은 이 콜백보다 먼저 돌아 플래그 때문에 건너뛰므로 여기서 직접 재시도)
+        v.__liveBarMounted = false;
         tryMountAll();
+      }
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
 
-        // 비디오 요소 추가 감지
-        observeElement({
-            selector: VIDEO_ELEMENT_NAME,
-            onElementAdded: () => tryMountAll(),
-        });
+    v.__liveBarMounted = true;
+  }
 
-        // 컨트롤 바 추가 감지
-        observeElement({
-            selector: BOTTOM_SEL,
-            onElementAdded: () => tryMountAll(),
-        });
+  function tryMountAll() {
+    if (!location.pathname.startsWith("/live/")) return;
+    document.querySelectorAll(VIDEO_ELEMENT_NAME).forEach((v) => mount(v));
+  }
 
-        // URL 변경 감지
-        startUrlWatcher({
-            onPathChange: () => tryMountAll(),
-            interval: 500,
-        });
-    }
+  // 선택자에 맞는 요소가 이미 있거나 새로 추가되면 콜백
+  function observeElement(selector, onElementAdded) {
+    document.querySelectorAll(selector).forEach(onElementAdded);
+    new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          if (node.matches?.(selector)) onElementAdded(node);
+          node.querySelectorAll?.(selector)?.forEach(onElementAdded);
+        }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
 
-    // DOM 준비 후 실행
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init, { once: true });
-    } else {
-        init();
-    }
+  // SPA 이동은 history API 대신 폴링으로 감지 (샌드박스 실행 환경에서도 동작)
+  function onPathChange(callback) {
+    let lastPath = location.pathname;
+    setInterval(() => {
+      if (location.pathname === lastPath) return;
+      lastPath = location.pathname;
+      callback();
+    }, 500);
+  }
+
+  // 비디오/컨트롤 바가 이미 있으면 즉시, 이후 추가되거나 URL이 바뀌면 마운트 시도
+  function init() {
+    observeElement(VIDEO_ELEMENT_NAME, tryMountAll);
+    observeElement(BOTTOM_SEL, tryMountAll);
+    onPathChange(tryMountAll);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
 })();
