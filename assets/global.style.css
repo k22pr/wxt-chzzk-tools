@@ -90,6 +90,24 @@
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
 }
 
+/* 컨트롤바가 보이는 동안 재생바·버튼 줄 주변 빈 곳을 눌러도 일시정지되지 않게 함.
+   치지직은 이 영역을 클릭 통과(none)로 둬서 빈 곳을 누르면 아래 비디오가 클릭됨 */
+:is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc--controls .pzp-pc__bottom,
+:fullscreen .pzp-pc--controls .pzp-pc__bottom {
+  pointer-events: auto;
+}
+/* 버튼 줄 위에 떠 있는 재생바와 버튼 줄 사이 틈도 막음.
+   재생바보다 앞 순서라 재생바 위 클릭은 그대로 재생바가 받음 */
+:is(#live_player_layout, #player_layout):not(.pip_mode) .pzp-pc--controls .pzp-pc__bottom::before,
+:fullscreen .pzp-pc--controls .pzp-pc__bottom::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 14px;
+}
+
 /* 홈 배너 광고 영역 숨김 */
 section:has(> #home_banner) {
   display: none !important;
