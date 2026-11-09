@@ -1,4 +1,4 @@
-import { createApp, type App } from "vue";
+import { createApp } from "vue";
 import VideoOverlay from "@/components/injected/VideoOverlay.vue";
 import { getOptions, observeElement } from "@/utils/content-helpers";
 
@@ -16,8 +16,8 @@ export default defineContentScript({
 
     // 오버레이 인스턴스를 저장할 맵 (비디오 요소 -> 오버레이 앱 인스턴스)
     const overlayMap = new WeakMap<Element, any>();
-    // 비디오가 사라지면 unmount하기 위한 앱 (컴포넌트의 document 리스너 정리)
-    const appMap = new WeakMap<Element, App>();
+    // 비디오가 사라지면 호출할 정리 함수 (오디오 체인·리스너·오버레이 앱)
+    const disposeMap = new WeakMap<Element, () => void>();
 
     // 오버레이는 영상 영역 안에 붙어 있어서, 그 안의 클릭이 플레이어에 '영상 클릭'(재생/일시정지)·
     // '영상 더블클릭'(전체화면)으로 전달됨. 오버레이에서 누른 경우(슬라이더를 끌다 영상 위에서 놓은 경우 포함)는 막음
@@ -75,7 +75,7 @@ export default defineContentScript({
       // ignore
     }
     const STORAGE_VERSION = 1;
-    // 기본 유효기간: 30일 (ms)
+    // 기본 유효기간: 7일 (ms)
     const STORAGE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
     function getChannelIdFromLocation(): string | null {
@@ -165,7 +165,8 @@ export default defineContentScript({
 
     function setupAudioForVideo(
       video: Element,
-      initialParams?: CompressorParams | null
+      initialParams: CompressorParams | null | undefined,
+      signal: AbortSignal
     ) {
       if (audioChainMap.has(video)) return;
 
@@ -203,16 +204,14 @@ export default defineContentScript({
           context.resume();
         }
       };
-      media.addEventListener("play", resumeContext, { passive: true });
+      media.addEventListener("play", resumeContext, { passive: true, signal });
 
       // 첫 클릭(pointerdown) 시에도 resume 시도 (음소거 해제 버튼 클릭 등 포함)
-      const handlePointerDown = () => {
-        resumeContext();
-        document.removeEventListener("pointerdown", handlePointerDown);
-      };
-      document.addEventListener("pointerdown", handlePointerDown, {
+      // (비디오가 먼저 사라지면 signal로 해제해 닫힌 AudioContext를 붙잡지 않게 함)
+      document.addEventListener("pointerdown", resumeContext, {
         once: true,
         passive: true,
+        signal,
       });
 
       if (initialParams) applyParams({ compressor, gain, filter }, initialParams);
@@ -222,10 +221,13 @@ export default defineContentScript({
 
     async function mountUi(video: Element) {
       if (mountedVideos.has(video)) return;
+      // 라이브/VOD/임베드 플레이어의 영상만 (홈 카드의 미리보기 영상마다 AudioContext·오버레이를 만들지 않음)
+      if (!video.closest("#live_player_layout, #player_layout, #embed_player_layout")) return;
       const parent = video.parentElement;
       if (!parent) return;
 
       mountedVideos.add(video);
+      const alive = new AbortController();
 
       const channelId = getChannelIdFromLocation();
       const savedParams = channelId ? loadParamsForChannel(channelId) : null;
@@ -233,8 +235,8 @@ export default defineContentScript({
       // 0. 비디오 오디오를 AudioContext + DynamicsCompressor로 연결
       // 페이지 로드 직후에는 체인을 붙이지 않고, 약간의 딜레이 후 한 번만 연결
       setTimeout(() => {
-        if (audioChainMap.has(video)) return;
-        setupAudioForVideo(video, savedParams ?? undefined);
+        if (alive.signal.aborted || audioChainMap.has(video)) return;
+        setupAudioForVideo(video, savedParams, alive.signal);
       }, 500);
 
       // 볼륨/음소거는 치지직 플레이어가 저장(localStorage player-volume)·적용하므로 건드리지 않음
@@ -287,9 +289,20 @@ export default defineContentScript({
           clearParamsForChannel(channelId);
         },
       });
-      const instance = app.mount(container as HTMLElement);
+      const instance = app.mount(container as HTMLElement) as any;
       overlayMap.set(video, instance); // 인스턴스 저장
-      appMap.set(video, app);
+
+      // 오버레이는 열 때의 버튼 위치(px)에 고정되므로, 플레이어 크기가 바뀌면(전체화면·넓은 화면·미니 플레이어·창 크기) 닫음
+      const resize = new ResizeObserver(() => instance.close());
+      resize.observe(container);
+
+      disposeMap.set(video, () => {
+        alive.abort();
+        resize.disconnect();
+        app.unmount();
+        audioChainMap.get(video)?.context.close();
+        audioChainMap.delete(video);
+      });
     }
 
     async function mountButton(controlBar: Element) {
@@ -365,8 +378,10 @@ export default defineContentScript({
       onElementRemoved: (el) =>
         setTimeout(() => {
           if (el.isConnected) return;
-          audioChainMap.get(el)?.context.close();
-          appMap.get(el)?.unmount();
+          // 제거가 두 번 보고돼도 한 번만 정리 (AudioContext를 두 번 close하면 오류)
+          const dispose = disposeMap.get(el);
+          disposeMap.delete(el);
+          dispose?.();
         }, 3000),
     });
 

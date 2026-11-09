@@ -285,8 +285,12 @@ onBeforeUnmount(() => {
   document.removeEventListener("pointerdown", handlePointerDown, true);
 });
 
+const close = () => {
+  show.value = false;
+};
+
 // 외부에서 제어할 수 있도록 expose
-defineExpose({ openAt });
+defineExpose({ openAt, close });
 </script>
 
 <template>

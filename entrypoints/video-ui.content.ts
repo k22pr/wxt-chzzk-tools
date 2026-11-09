@@ -13,7 +13,8 @@ const CSS = `
     padding: 25px 10px 10px 10px;
     border-radius: 20px;
     width: fit-content;
-    min-width: 600px;
+    /* 플레이어가 600px보다 좁으면 max-width보다 커져 잘리므로 95%로 제한 */
+    min-width: min(600px, 95%);
     max-width: 95%;
     transform: translateX(-50%);
     left: 50%;
@@ -23,7 +24,7 @@ const CSS = `
   }
 
   :fullscreen .pzp-pc .pzp-pc__bottom {
-    min-width: 800px !important;
+    min-width: min(800px, 95%) !important;
     padding: 35px 10px 10px 10px !important;
   }
 

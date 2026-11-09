@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, ref } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps<{
   modelValue: number;
@@ -46,35 +46,34 @@ function updateFromClientX(clientX: number) {
   emit("update:modelValue", next);
 }
 
-const onPointerDown = (event: MouseEvent) => {
+// 포인터 이벤트(마우스·터치·펜 공통) + 포인터 캡처: 슬라이더 밖으로 끌어도 놓을 때까지 이벤트가 여기로 옴
+const onPointerDown = (event: PointerEvent) => {
+  if (event.button !== 0) return; // 주 버튼(왼쪽 클릭·터치·펜)만
+  trackRef.value?.setPointerCapture(event.pointerId);
   isDragging.value = true;
   updateFromClientX(event.clientX);
-  window.addEventListener("mousemove", onPointerMove);
-  window.addEventListener("mouseup", onPointerUp);
 };
 
-const onPointerMove = (event: MouseEvent) => {
+const onPointerMove = (event: PointerEvent) => {
   if (!isDragging.value) return;
   updateFromClientX(event.clientX);
 };
 
 const onPointerUp = () => {
   isDragging.value = false;
-  window.removeEventListener("mousemove", onPointerMove);
-  window.removeEventListener("mouseup", onPointerUp);
 };
-
-onBeforeUnmount(() => {
-  window.removeEventListener("mousemove", onPointerMove);
-  window.removeEventListener("mouseup", onPointerUp);
-});
 </script>
 
 <template>
+  <!-- mousedown.prevent: 마우스로 누를 때 포커스 이동·텍스트 선택 방지 (기존 동작 유지) -->
   <div
     class="chzzk-tools-slider"
     ref="trackRef"
-    @mousedown.prevent="onPointerDown"
+    @pointerdown="onPointerDown"
+    @pointermove="onPointerMove"
+    @pointerup="onPointerUp"
+    @pointercancel="onPointerUp"
+    @mousedown.prevent
   >
     <div class="chzzk-tools-slider__track"></div>
     <div

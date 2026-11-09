@@ -1,6 +1,6 @@
 /**
  * ad-fix.content.ts
- * 광고 표시 플래그·광고 감지 API를 차단하고, 광고 차단 팝업이 떠 있는 동안 키보드 볼륨 조절을 비디오로 전달하는 스크립트
+ * 광고 표시 플래그·미드롤 광고 폴링을 차단하고, 광고 차단 팝업이 떠 있는 동안 키보드 볼륨 조절을 비디오로 전달하는 스크립트
  * (팝업 자체는 global.style.css에서 숨김)
  */
 
@@ -38,33 +38,15 @@ export default defineContentScript({
       return Promise.resolve(new TextEncoder().encode(NO_ADS).buffer as ArrayBuffer);
     };
 
-    // --- 1. 네트워크 차단 (Fetch/XHR) ---
-    const originalFetch = window.fetch;
-    window.fetch = function (input, init) {
-      const url =
-        typeof input === "string" ? input : (input as Request).url || "";
-      if (url.includes("ad-polling") || url.includes("ad-video-info")) {
-        console.log("[chzzk-tools] 광고 감지 API 차단됨:", url);
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              code: 200,
-              message: "success",
-              content: { pollingInterval: 300000, adInfo: null },
-            }),
-            { status: 200, headers: { "Content-Type": "application/json" } }
-          )
-        );
-      }
-      return originalFetch.apply(this, arguments as any);
-    };
-
+    // --- 1. 미드롤 광고 폴링 차단 (XHR) ---
+    // 미드롤 광고 정보는 axios(XHR)로 ad-polling을 조회함. 위 플래그로 미드롤 컴포넌트가 아예 안 뜨지만,
+    // 플래그 우회가 깨질 때를 대비해 '광고 없음'으로 응답
     const originalOpen = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open = function (method, url) {
       const urlStr = typeof url === "string" ? url : url.toString();
-      if (urlStr.includes("ad-polling") || urlStr.includes("ad-video-info")) {
-        (this as any)._isAdPolling = true;
-      }
+      // 같은 객체를 다른 URL로 다시 open하면 이전 가짜 응답 상태를 지움
+      (this as any)._isAdPolling = urlStr.includes("ad-polling");
+      for (const key of ["status", "readyState", "responseText"]) delete (this as any)[key];
       return originalOpen.apply(this, arguments as any);
     };
 
@@ -72,17 +54,20 @@ export default defineContentScript({
     XMLHttpRequest.prototype.send = function () {
       if ((this as any)._isAdPolling) {
         console.log("[chzzk-tools] XHR 광고 요청 차단됨");
-        Object.defineProperty(this, "status", { value: 200 });
+        Object.defineProperty(this, "status", { value: 200, configurable: true });
         Object.defineProperty(this, "responseText", {
           value: JSON.stringify({
             code: 200,
             message: "success",
-            content: {},
+            content: { pollingInterval: 300000, adInfo: null },
           }),
+          configurable: true,
         });
-        Object.defineProperty(this, "readyState", { value: 4 });
-        this.dispatchEvent(new Event("load"));
+        Object.defineProperty(this, "readyState", { value: 4, configurable: true });
         this.dispatchEvent(new Event("readystatechange"));
+        this.dispatchEvent(new Event("load"));
+        // axios는 loadend로 응답을 처리하므로 없으면 요청이 끝나지 않고 계속 대기함
+        this.dispatchEvent(new Event("loadend"));
         return;
       }
       return originalSend.apply(this, arguments as any);

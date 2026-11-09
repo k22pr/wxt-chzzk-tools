@@ -65,7 +65,8 @@ export default defineBackground(() => {
     const isChzzk = url?.startsWith("https://chzzk.naver.com/") ?? false;
 
     try {
-      await browser.action.setIcon({
+      // Firefox(MV2)에는 action이 없고 browserAction만 있음
+      await (browser.action ?? browser.browserAction).setIcon({
         tabId,
         path: isChzzk
           ? {
