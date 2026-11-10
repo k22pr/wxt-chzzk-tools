@@ -1,6 +1,6 @@
 /**
  * chat-align.content.ts
- * 라이브·VOD 채팅창의 배지 칸을 아이콘 1개 크기로 고정하고 닉네임 칸을 56px로 고정
+ * 라이브·VOD 채팅창의 배지 칸을 아이콘 1개 크기로 고정하고 닉네임 칸을 팝업에서 정한 폭(기본 56px)으로 고정
  * - 배지 없음: 배지 하나만큼 빈 자리 / 1개: 그대로 / 2개 이상: 배지 하나 크기 안에 2x2로 작게
  * - 채팅 행은 채팅창에만 있으므로 /live, /video 외 페이지에는 영향 없음
  */
@@ -11,7 +11,7 @@ import { getOptions, watchOptions } from "@/utils/content-helpers";
 // 채팅 행 = 닉네임 버튼(배지 묶음 + 닉네임) + 메시지. 치지직 클래스명은 해시가 붙으므로 이름 부분으로 찾음
 const NAME_BOX = '[class*="_chatting_message_"] > [class*="_nickname_"] > [class*="_container_"]';
 
-const CSS = `
+const css = (nickWidth: number) => `
   /* 배지 아이콘 크기·간격. 채팅 팝업에서 채팅 크기를 키우면 치지직이 _scale_ 클래스를 붙이고 아이콘을 키움 */
   ${NAME_BOX} { --chat-align-icon: 18px; --chat-align-gap: 4px; }
   ${NAME_BOX}[class*="_scale_125_"] { --chat-align-icon: 24px; --chat-align-gap: 5px; }
@@ -54,13 +54,13 @@ const CSS = `
     height: 100%;
   }
 
-  /* 닉네임 칸 56px 고정. 넘치는 글자는 말줄임(...) 없이 그냥 잘림 */
+  /* 닉네임 칸은 팝업에서 정한 폭으로 고정. 넘치는 글자는 말줄임(...) 없이 그냥 잘림 */
   ${NAME_BOX} > [class*="_nickname_"] [class*="_text_"] { text-overflow: clip; }
   ${NAME_BOX} > [class*="_nickname_"] {
     flex: none;
-    width: 56px;
-    min-width: 56px;
-    max-width: 56px;
+    width: ${nickWidth}px;
+    min-width: ${nickWidth}px;
+    max-width: ${nickWidth}px;
     padding-right: 2px;
     /* 닉네임이 <button> 안에 있어 브라우저 기본값(가운데 정렬)을 물려받으므로 왼쪽으로 */
     text-align: left;
@@ -75,18 +75,21 @@ const CSS = `
 
 const STYLE_ID = "chzzk-tools-chat-align";
 
-function apply({ useChatAlign }: Options) {
-  const existing = document.getElementById(STYLE_ID);
+function apply({ useChatAlign, chatNickWidth }: Options) {
+  let style = document.getElementById(STYLE_ID);
   if (!useChatAlign) {
-    existing?.remove();
+    style?.remove();
     return;
   }
-  if (existing) return;
-  const style = document.createElement("style");
-  style.id = STYLE_ID;
-  style.textContent = CSS;
-  // document_start 시점엔 head가 없을 수 있으나 <html> 직속 style도 그대로 적용됨
-  (document.head || document.documentElement).appendChild(style);
+  if (!style) {
+    style = document.createElement("style");
+    style.id = STYLE_ID;
+    // document_start 시점엔 head가 없을 수 있으나 <html> 직속 style도 그대로 적용됨
+    (document.head || document.documentElement).appendChild(style);
+  }
+  // 팝업 슬라이더를 움직이는 동안 실시간 반영. 다른 옵션만 바뀐 경우엔 내용이 같아 다시 쓰지 않음
+  const text = css(chatNickWidth);
+  if (style.textContent !== text) style.textContent = text;
 }
 
 export default defineContentScript({

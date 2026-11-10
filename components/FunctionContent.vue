@@ -2,11 +2,15 @@
 // 기능 탭 컴포넌트
 import type { Options } from "@/constants";
 
-defineProps<{ options: Options }>();
+const props = defineProps<{ options: Options }>();
 
 const emit = defineEmits<{
   (e: "update:options", value: any): void;
 }>();
+
+// 끌어 움직이는 동안 계속 호출됨 (range 모드가 아니라 값은 항상 number)
+const onNickWidth = (value: number | [number, number]) =>
+  emit("update:options", { ...props.options, chatNickWidth: value as number });
 
 // 사용불가 옵션(광고 차단·자동 화질변경·LIVE 재생바)은 ` 키를 누르고 있는 동안만 변경 가능
 const unlocked = ref(false);
@@ -107,7 +111,7 @@ onUnmounted(() => {
         <div w="full">
           <div text="4">채팅창 정렬</div>
           <div text="3 gray-5">
-            배지를 아이콘 한 칸에 모으고, 닉네임 칸을 56px로 맞추고 넘치는 글자는 자릅니다.
+            배지를 아이콘 한 칸에 모으고, 닉네임 칸을 아래 폭으로 맞추고 넘치는 글자는 자릅니다.
           </div>
         </div>
         <div>
@@ -117,6 +121,22 @@ onUnmounted(() => {
               emit('update:options', { ...options, useChatAlign: $event })
             "
           />
+        </div>
+      </div>
+      <!-- 옵션을 꺼도 값은 남도록 비활성화만 함. 움직일 때마다 저장되어 채팅창에 바로 반영됨 -->
+      <div w="full" flex items="center" gap="3">
+        <!-- 값은 오른쪽에 항상 보이므로 툴팁은 끔 -->
+        <a-slider
+          class="nick-slider"
+          :min="0"
+          :max="100"
+          :tip-formatter="null"
+          :disabled="!options.useChatAlign"
+          :value="options.chatNickWidth"
+          @change="onNickWidth"
+        />
+        <div text="3 gray-5 right" w="12" shrink="0">
+          {{ options.chatNickWidth }}px
         </div>
       </div>
     </div>
@@ -241,3 +261,10 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.nick-slider {
+  flex: 1;
+  min-width: 0;
+}
+</style>

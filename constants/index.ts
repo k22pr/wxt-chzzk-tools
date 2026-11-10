@@ -13,6 +13,7 @@ export const DEFAULT_OPTIONS = {
   useVideoTime: true,
   useThumbnailRefresh: true,
   useChatAlign: false,
+  chatNickWidth: 56, // 채팅창 정렬의 닉네임 칸 폭(px, 0~100)
   useVideoUI: false,
   useHideBanner: false,
   useHideRecommend: false,
