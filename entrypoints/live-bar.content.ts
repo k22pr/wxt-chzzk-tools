@@ -11,6 +11,9 @@ const EDGE_EPS = 0.5;
 // 치지직 기본 재생 위치는 라이브 끝보다 3~4.5초 뒤라, 그보다 넉넉해야 LIVE 표시가 깜빡이지 않음
 const LIVE_EPS = 6;
 const MAX_VIDEO_DURATION = 60 * 1.5;
+// 서버 재생목록이 담는 길이(실측 30~33초). 이보다 이전 구간은 브라우저에 남은 버퍼로만 재생 가능
+// ponytail: 플레이어 내부 값을 못 읽어 실측 하한으로 고정. 서버 창이 바뀌면 같이 조정
+const PLAYLIST_WINDOW = 30;
 
 const CSS = `
       .live-bar-box{display:flex !important;position:absolute;left:0px;bottom:30px !important;width:100%;font-size:11px;line-height:1;}
@@ -92,6 +95,19 @@ function getEdges(v: HTMLVideoElement) {
     };
   }
   return { start: 0, end: isFinite(v.duration) ? v.duration : 0, ok: false };
+}
+
+// 재생목록 창보다 이전인데 버퍼에도 없는 구멍(seekable은 구멍까지 한 범위로 보고함)은 받아 올 수 없어
+// 플레이어가 곧바로 라이브로 되돌리므로, t 이후 2초 이상 이어서 재생할 수 있는 첫 버퍼 위치로 옮김
+// (버퍼 끝 2초 안이나 짧은 조각도 곧 구멍에 닿아 멈추므로 건너뜀)
+function playableTarget(v: HTMLVideoElement, t: number, end: number) {
+  if (t >= end - PLAYLIST_WINDOW) return t;
+  const b = v.buffered;
+  for (let i = 0; i < b.length; i++) {
+    const s = Math.max(t, b.start(i));
+    if (b.end(i) - s >= 2) return s;
+  }
+  return t;
 }
 
 function findBottomContainer(v: HTMLVideoElement): Element | null {
@@ -231,13 +247,46 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
     if (lastEvt) renderAt(lastEvt.clientX);
   }
 
+  // 재생목록 창보다 이전으로 되감은 직후의 목표 위치. 플레이어(hls.js)는 재생목록을 갱신할 때(약 1초마다)
+  // 위치가 창 밖이고 아직 재생 준비 중(readyState<4)이면 라이브로 되돌리는데, 이동 직후엔 잠깐 그 상태가 됨
+  let rewound: { target: number; until: number; retries: number } | null = null;
+
   function seekTo(val: number) {
     const { start, end } = getEdges(v);
-    const t = Math.min(end - 1, Math.max(start, val));
+    const t = playableTarget(v, Math.min(end - 1, Math.max(start, val)), end);
     // 라이브 끝 1초 안에서 앞으로 가는 요청(→ 키, LIVE 버튼)이 끝-1초로 잘려 오히려 뒤로 가지 않게 함
     if (val > v.currentTime && t <= v.currentTime) return;
+    // 뒤로 가는 요청이 구멍을 건너뛰느라 앞으로 가게 되면 이동하지 않음
+    // (구멍 너머 이전 버퍼는 재생해도 곧 구멍에서 멈춰 라이브로 튀므로 넘어가지 않음)
+    if (val < v.currentTime && t >= v.currentTime) return;
     v.currentTime = t;
+    // 창은 조각(2~4초) 단위로 밀리므로 창 경계 바로 안쪽도 곧 창 밖이 됨: 4초 여유를 두고 대비
+    rewound =
+      t < end - PLAYLIST_WINDOW + 4
+        ? { target: t, until: performance.now() + 2000, retries: 2 }
+        : null;
   }
+
+  // 되감은 직후 플레이어가 라이브 쪽으로 되돌리면 같은 위치로 다시 이동 (최대 2번)
+  // 되돌리는 위치는 끊김이 쌓일수록 라이브에서 멀어지므로(최대 약 12초) 라이브와의 거리 대신 '10초 넘게 앞으로 감'으로 판단
+  v.addEventListener(
+    "seeking",
+    () => {
+      if (!rewound || performance.now() > rewound.until) return void (rewound = null);
+      const { target } = rewound;
+      if (Math.abs(v.currentTime - target) < 1) return; // 우리가 건 이동
+      if (
+        v.currentTime - target > 10 &&
+        rewound.retries-- > 0 &&
+        playableTarget(v, target, getEdges(v).end) === target // 그 사이 데이터가 사라졌으면 포기
+      ) {
+        v.currentTime = target;
+      } else {
+        rewound = null;
+      }
+    },
+    { signal: alive.signal }
+  );
 
   slide.addEventListener("mousedown", seekFromClick);
   document.querySelector(VIDEO_LAYOUT_NAME)?.addEventListener(
