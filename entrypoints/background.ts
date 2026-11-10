@@ -76,12 +76,15 @@ export default defineBackground(() => {
 
   // 아이콘 업데이트 함수
   // tabs 권한이 없어 치지직 외 탭은 url이 undefined로 오므로, url이 없으면 회색 아이콘
-  const updateIcon = async (tabId: number, url: string | undefined) => {
+  const updateIcon = (tabId: number, url: string | undefined) => {
     const isChzzk = url?.startsWith("https://chzzk.naver.com/") ?? false;
 
-    try {
-      // Firefox(MV2)에는 action이 없고 browserAction만 있음
-      await (browser.action ?? browser.browserAction).setIcon({
+    // Firefox(MV2)에는 action이 없고 browserAction만 있음
+    // 이미 닫혔거나 교체된 탭이면 Chrome은 promise를 실패시키지 않고 'Unchecked runtime.lastError'만 남기므로
+    // (try/catch로 못 막음) 콜백에서 lastError를 읽어 무시함. Firefox도 chrome 네임스페이스는 콜백을 받음
+    const chrome: typeof browser = (globalThis as any).chrome;
+    (chrome.action ?? chrome.browserAction).setIcon(
+      {
         tabId,
         path: isChzzk
           ? {
@@ -94,10 +97,9 @@ export default defineBackground(() => {
               48: "/icon/icon-48-gray.png",
               128: "/icon/icon-128-gray.png",
             },
-      });
-    } catch {
-      // 아이콘 설정 실패 시 무시 (제한된 페이지에서 발생 가능)
-    }
+      },
+      () => void chrome.runtime.lastError
+    );
   };
 
   // 탭 업데이트 시 아이콘 변경
