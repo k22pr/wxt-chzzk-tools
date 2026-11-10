@@ -120,7 +120,7 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-    <a-tooltip placement="top" title="치지직 정책으로 인해 사용할 수 없습니다.">
+    <div>
       <div w="full" grid gap="2" relative>
         <div
           v-if="!unlocked"
@@ -199,6 +199,6 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-    </a-tooltip>
+    </div>
   </div>
 </template>
