@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY, DEFAULT_OPTIONS, type Options } from "@/constants";
 import { getOptions } from "@/utils/content-helpers";
 import FunctionContent from "@/components/FunctionContent.vue";
@@ -18,7 +17,8 @@ watch(
   options,
   async (val) => {
     try {
-      await storage.setItem(`local:${STORAGE_KEY}`, val);
+      // reactive 프록시는 Firefox에서 복제되지 않으므로 일반 객체로 저장
+      await browser.storage.local.set({ [STORAGE_KEY]: { ...val } });
     } catch (e) {}
   },
   { deep: true },

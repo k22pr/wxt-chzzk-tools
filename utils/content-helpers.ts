@@ -2,22 +2,24 @@
  * content script에서 공통으로 사용하는 유틸리티 함수들
  */
 
-import { storage } from "wxt/utils/storage";
 import { STORAGE_KEY, DEFAULT_OPTIONS, type Options } from "@/constants";
 
-const OPTIONS_KEY = `local:${STORAGE_KEY}` as const;
+// 저장소 라이브러리(wxt/utils/storage) 대신 브라우저 API를 직접 씀: 스크립트마다 약 10KB씩 번들에 들어가던 것을 없앰
 
 /** 저장된 옵션을 기본값과 병합해 반환합니다. */
 export async function getOptions(): Promise<Options> {
-  const saved = await storage.getItem<Partial<Options>>(OPTIONS_KEY);
-  return { ...DEFAULT_OPTIONS, ...saved };
+  const { [STORAGE_KEY]: saved } = await browser.storage.local.get(STORAGE_KEY);
+  return { ...DEFAULT_OPTIONS, ...(saved as Partial<Options> | undefined) };
 }
 
 /** 옵션 변경을 감시합니다. (기본값 병합) @returns unwatch 함수 */
 export function watchOptions(callback: (options: Options) => void) {
-  return storage.watch<Partial<Options>>(OPTIONS_KEY, (saved) =>
-    callback({ ...DEFAULT_OPTIONS, ...saved }),
-  );
+  const listener = (changes: Record<string, { newValue?: unknown }>, area: string) => {
+    if (area !== "local" || !(STORAGE_KEY in changes)) return;
+    callback({ ...DEFAULT_OPTIONS, ...(changes[STORAGE_KEY].newValue as Partial<Options> | undefined) });
+  };
+  browser.storage.onChanged.addListener(listener);
+  return () => browser.storage.onChanged.removeListener(listener);
 }
 
 export interface UrlWatcherOptions {
