@@ -22,7 +22,7 @@ const CSS = `
       .live-bar-box .time{display:flex;gap:4px;align-items:center}
       .live-bar-box .slide-box{display:flex;flex:1;position:relative;align-items:center;width:100%; height:4px;padding:8px 0px;cursor:pointer;background:transparent;}
       .live-bar-box .slide-box:hover{height:6px;}
-      .live-bar-box .slide-box div{transition:width 0.1s, height 0.2s;}
+      .live-bar-box .slide-box :is(.track,.rng){transition:width 0.1s, height 0.2s;}
       .live-bar-box .slide-box .track{position:absolute;left:0px;width:100%;height:2px;border-radius:3px;background:rgba(255,255,255,0.5);}
       .live-bar-box .slide-box .rng{position:absolute;left:0px;height:2px;border-radius:3px;background:#00f889;}
       .live-bar-box .slide-box:hover .track{height:6px;border-radius:3px;box-shadow:0px 0px 4px rgba(0,0,0,0.3);}
@@ -149,9 +149,7 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
   let raf = 0;
   let lastEvt: PointerEvent | null = null;
 
-  const useRVFC = "requestVideoFrameCallback" in v;
-  let rafId = 0;
-  // 비디오/바가 사라지면 비디오·레이아웃에 단 리스너와 갱신 루프를 함께 정리
+  // 비디오/바가 사라지면 비디오·레이아웃에 단 리스너를 함께 정리
   const alive = new AbortController();
 
   const onMove = (e: PointerEvent) => {
@@ -209,7 +207,8 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
     const native = wrap.parentElement?.querySelector(
       ".pzp-pc__progress-slider:not(.live-bar-box)"
     );
-    wrap.hidden = !!native && getComputedStyle(native).display !== "none";
+    const hide = !!native && getComputedStyle(native).display !== "none";
+    if (wrap.hidden !== hide) wrap.hidden = hide;
 
     const { start, end } = getEdges(v);
 
@@ -220,18 +219,15 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
       rng.style.width = `${Math.min(100, percent * 100)}%`;
     }
 
-    const totalTime = Math.max(0, end - start);
-    tTotal.textContent = timeFormat(Math.min(totalTime, MAX_VIDEO_DURATION));
+    // 같은 값을 다시 쓰면 텍스트 노드가 교체돼 레이아웃·MutationObserver가 깨므로 바뀔 때만 씀
+    const total = timeFormat(Math.min(Math.max(0, end - start), MAX_VIDEO_DURATION));
+    if (tTotal.textContent !== total) tTotal.textContent = total;
 
     const live = atLiveEdge(v.currentTime);
-    if (live) {
-      btn.textContent = "LIVE";
-      btn.classList.add("live");
-    } else {
-      // 라이브 끝점 기준 지연 시간 (hover 툴팁과 같은 기준)
-      btn.textContent = timeFormat(v.currentTime - end);
-      btn.classList.remove("live");
-    }
+    // 라이브가 아니면 라이브 끝점 기준 지연 시간 (hover 툴팁과 같은 기준)
+    const label = live ? "LIVE" : timeFormat(v.currentTime - end);
+    if (btn.textContent !== label) btn.textContent = label;
+    btn.classList.toggle("live", live);
     if (lastEvt) renderAt(lastEvt.clientX);
   }
 
@@ -288,23 +284,13 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
   slide.addEventListener("pointermove", onMove, { passive: true });
 
   slide.addEventListener("pointerleave", () => {
+    // 남겨 두면 이후 갱신마다 숨은 툴팁 위치를 계산하느라 강제 레이아웃이 일어남
+    lastEvt = null;
     tip.classList.remove("show");
     cross.classList.remove("show");
   });
 
-  function loopRVFC() {
-    (v as any).requestVideoFrameCallback(() => {
-      if (alive.signal.aborted) return;
-      updateUI();
-      loopRVFC();
-    });
-  }
-  function loopRAF() {
-    if (alive.signal.aborted) return;
-    updateUI();
-    rafId = requestAnimationFrame(loopRAF);
-  }
-
+  // 프레임마다 갱신하지 않고 미디어 이벤트(timeupdate는 약 4Hz)로만 갱신. 막대는 width 트랜지션으로 이어짐
   [
     "loadedmetadata",
     "durationchange",
@@ -320,12 +306,9 @@ function mount(v: HTMLVideoElement & { __liveBarMounted?: boolean }) {
   ].forEach((ev) => v.addEventListener(ev, updateUI, { signal: alive.signal }));
 
   updateUI();
-  if (useRVFC) loopRVFC();
-  else loopRAF();
 
   const mo = new MutationObserver(() => {
     if (!document.contains(v) || !document.contains(wrap)) {
-      if (rafId) cancelAnimationFrame(rafId);
       alive.abort();
       wrap.remove();
       mo.disconnect();
