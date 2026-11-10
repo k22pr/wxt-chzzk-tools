@@ -11,6 +11,8 @@ let intervalId: ReturnType<typeof setInterval> | undefined;
  * 라이브 썸네일(img src / srcset)의 date 파라미터를 현재 시각으로 갱신합니다.
  */
 function refreshAllThumbnails(): void {
+  // 보이지 않는 탭에서는 썸네일을 다시 받지 않음 (홈 기준 1회 약 2.5MB)
+  if (document.hidden) return;
   const now = String(Date.now());
   for (const attr of ["src", "srcset"]) {
     document.querySelectorAll(`[${attr}*="${THUMB_HOST}"]`).forEach((el) => {
