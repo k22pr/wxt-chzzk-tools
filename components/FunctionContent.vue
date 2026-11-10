@@ -8,7 +8,7 @@ const emit = defineEmits<{
   (e: "update:options", value: any): void;
 }>();
 
-// 사용불가 옵션(자동 화질변경·LIVE 재생바)은 ` 키를 누르고 있는 동안만 변경 가능
+// 사용불가 옵션(광고 차단·자동 화질변경·LIVE 재생바)은 ` 키를 누르고 있는 동안만 변경 가능
 const unlocked = ref(false);
 const onKey = (e: KeyboardEvent) => {
   if (e.code === "Backquote") unlocked.value = e.type === "keydown";
@@ -122,6 +122,45 @@ onUnmounted(() => {
     </div>
     <div>
       <div w="full" grid gap="2" relative>
+        <div
+          v-if="!unlocked"
+          absolute
+          top="0"
+          left="0"
+          right="0"
+          h="full"
+          flex
+          items="center"
+          justify="center"
+        >
+          <div class="i-line-md-cancel" text="6"></div>
+        </div>
+        <div
+          w="full"
+          flex
+          items="top"
+          class="flex"
+          :class="{ 'opacity-33': !unlocked }"
+          justify="between"
+        >
+          <div w="full">
+            <div text="4">광고 차단</div>
+            <div text="3 gray-5">
+              영상 광고를 차단하고, 광고 차단 안내 팝업과 홈 배너 광고를 숨깁니다.
+            </div>
+          </div>
+          <div>
+            <a-switch
+              :disabled="!unlocked"
+              :checked="options.useAdBlock"
+              @update:checked="
+                emit('update:options', { ...options, useAdBlock: $event })
+              "
+            />
+          </div>
+        </div>
+      </div>
+      <div w="full" grid gap="2" mt="2" relative>
         <div
           v-if="!unlocked"
           absolute

@@ -1,8 +1,21 @@
 /**
  * ad-fix.content.ts
  * 광고 표시 플래그·미드롤 광고 폴링을 차단하고, 광고 차단 팝업이 떠 있는 동안 키보드 볼륨 조절을 비디오로 전달하는 스크립트
- * (팝업 자체는 global.style.css에서 숨김)
+ * (팝업 자체는 ad-block.content.ts에서 숨김)
  */
+
+import { AD_BLOCK_FLAG } from "@/constants";
+
+// '광고 차단' 옵션 켜짐 여부. ad-block.content.ts가 페이지 localStorage에 써 둔 값을 쓸 때마다 읽음
+// (페이지 스크립트보다 먼저 가로채야 해서 훅은 항상 걸어 두고, 꺼져 있으면 그대로 통과시킴)
+// 사이트 데이터가 차단돼 localStorage 접근이 throw해도 XHR 등 페이지 동작이 깨지지 않게 꺼짐으로 처리
+const enabled = () => {
+  try {
+    return localStorage.getItem(AD_BLOCK_FLAG) === "1";
+  } catch {
+    return false;
+  }
+};
 
 const AD_BLOCK_POPUP = '[data-nlog-area="ad_blocking_info_layer"]';
 // 광고 표시 여부 API. 응답은 {livePlaybackJson:{liveId, chatChannelId}}로 위장한 프리롤/미드롤 플래그
@@ -28,7 +41,7 @@ export default defineContentScript({
     const adFlagKeys = new WeakSet<CryptoKey>();
     subtle.encrypt = (algorithm, key, data) => {
       try {
-        if (new TextDecoder().decode(data).includes(AD_FLAG_API)) adFlagKeys.add(key);
+        if (enabled() && new TextDecoder().decode(data).includes(AD_FLAG_API)) adFlagKeys.add(key);
       } catch {}
       return encrypt(algorithm, key, data);
     };
@@ -45,7 +58,7 @@ export default defineContentScript({
     XMLHttpRequest.prototype.open = function (method, url) {
       const urlStr = typeof url === "string" ? url : url.toString();
       // 같은 객체를 다른 URL로 다시 open하면 이전 가짜 응답 상태를 지움
-      (this as any)._isAdPolling = urlStr.includes("ad-polling");
+      (this as any)._isAdPolling = enabled() && urlStr.includes("ad-polling");
       for (const key of ["status", "readyState", "responseText"]) delete (this as any)[key];
       return originalOpen.apply(this, arguments as any);
     };
@@ -79,7 +92,8 @@ export default defineContentScript({
       "keydown",
       (e) => {
         if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-        if (!document.querySelector(AD_BLOCK_POPUP)) return;
+        // 옵션이 꺼져 있으면 팝업을 숨기지 않으므로 치지직 기본 동작에 맡김
+        if (!enabled() || !document.querySelector(AD_BLOCK_POPUP)) return;
         // 채팅/검색 입력 중의 방향키는 무시
         const target = e.target as HTMLElement | null;
         if (target?.closest?.("input, textarea, [contenteditable]")) return;

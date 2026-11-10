@@ -1,7 +1,11 @@
 export const STORAGE_KEY = "chzzk-tools:options";
 
+// 광고 차단 옵션을 MAIN world(ad-fix)에 전달하는 페이지 localStorage 키 (MAIN world는 확장 저장소를 못 읽음)
+export const AD_BLOCK_FLAG = "chzzk-tools:ad-block";
+
 // 팝업과 모든 content script가 공유하는 옵션 기본값 (저장값이 없거나 일부 키가 빠졌을 때 사용)
 export const DEFAULT_OPTIONS = {
+  useAdBlock: false,
   useAutoQuality: false,
   useLiveBar: false,
   useVideoOverlay: true,

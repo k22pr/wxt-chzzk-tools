@@ -7,16 +7,27 @@ const SPOOFED_USER_AGENT =
 export default defineBackground(() => {
   // 저장 키 이름 변경(pzzk-tools → chzzk-tools): 업데이트 시 기존 옵션을 새 키로 옮긴다.
   // 옛 chzzk 키에 오래된 값이 남아 있을 수 있으므로 pzzk 값으로 덮어쓴다.
-  browser.runtime.onInstalled.addListener(async () => {
+  browser.runtime.onInstalled.addListener(async ({ reason }) => {
     // 동적 규칙은 브라우저 재시작·확장 업데이트 후에도 유지되므로 설치·업데이트 때 한 번만 등록
     // (SW는 다른 사이트의 탭 이벤트로도 자주 깨어나므로 깨어날 때마다 다시 쓰지 않음)
     setupUserAgentRule();
 
     const LEGACY_KEY = "pzzk-tools:options";
     const { [LEGACY_KEY]: legacy } = await browser.storage.local.get(LEGACY_KEY);
-    if (!legacy) return;
-    await browser.storage.local.set({ [STORAGE_KEY]: legacy });
-    await browser.storage.local.remove(LEGACY_KEY);
+    if (legacy) {
+      await browser.storage.local.set({ [STORAGE_KEY]: legacy });
+      await browser.storage.local.remove(LEGACY_KEY);
+    }
+
+    // 광고 차단은 원래 항상 켜져 있던 기능이라, 옵션이 생기기 전부터 쓰던 사용자(업데이트)는 켜 두고 새 설치는 끔.
+    // 팝업을 한 번도 안 연 사용자는 저장된 옵션이 없으므로 저장값 대신 설치 사유로 구분함.
+    // 한 번 정해 저장한 뒤로는 건드리지 않음 (이후 업데이트에서도 사용자가 바꾼 값 유지)
+    if (reason !== "install" && reason !== "update") return;
+    const { [STORAGE_KEY]: saved = {} } = await browser.storage.local.get(STORAGE_KEY);
+    if ("useAdBlock" in saved) return;
+    await browser.storage.local.set({
+      [STORAGE_KEY]: { ...saved, useAdBlock: reason === "update" },
+    });
   });
 
   // User-Agent 스푸핑 규칙 등록
